@@ -1,8 +1,18 @@
+# Python cache
 __pycache__/
 *.pyc
+
+# Output videos
 output/
 *.mp4
-music.mp3
+
+# Audio temp files
+*.m4a
+
+# Virtual env (if you ever use one)
+venv/
+.env/
+
+# OS noise
 .DS_Store
-.env
-.refact/
+Thumbs.db

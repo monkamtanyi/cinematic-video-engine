@@ -1,52 +1,64 @@
-import math
-import random
+import numpy as np
 
 
 class MotionEngine:
-    """
-    V2 Cinematic Motion Engine (deterministic + segment-based)
-    Replaces old hero() system entirely.
-    """
 
-    def drift(self, t, duration, seed=0):
-        random.seed(seed)
+    def __init__(self):
+        self.cx = 960
+        self.cy = 540
 
-        # base velocity per image
-        vx = random.uniform(-80, 80)
-        vy = random.uniform(-50, 50)
+    # smooth easing (important for cinematic feel)
+    def ease(self, t):
+        return 3*t**2 - 2*t**3
 
-        progress = min(max(t / duration, 0), 1)
+    # SEGMENT 1 — HERO MOTION (multi-directional + zoom wave)
+    def field_motion(self, t, i):
 
-        # smooth cinematic easing (ease in-out)
-        ease = 3 * progress**2 - 2 * progress**3
+        e = self.ease(t)
 
-        return vx * ease, vy * ease
+        x = self.cx + 300*np.sin(2*np.pi*e + i)
+        y = self.cy + 180*np.cos(2*np.pi*e + i*0.5)
 
-    def conveyor(self, t, speed=120):
-        """
-        horizontal cinematic scroll (like film strip)
-        """
-        return -speed * t, 0
+        zoom = 1 + 0.25*np.sin(np.pi * e)
 
-    def split(self, t, duration, side="left"):
-        """
-        dual-lane separation motion
-        """
-        progress = min(max(t / duration, 0), 1)
-        direction = -1 if side == "left" else 1
+        return x, y, zoom
 
-        x = direction * (120 * progress)
-        y = 20 * math.sin(progress * math.pi)
+    # SEGMENT 2 — CONVEYOR BELT
+    def conveyor(self, t, i):
 
-        return x, y
+        spacing = 250
 
-    def wheel(self, t, radius=250, speed=2):
-        """
-        circular carousel motion
-        """
-        angle = speed * t
+        x = 1920 - (1920 + spacing) * t + (i % 8) * spacing
+        y = self.cy + 60*np.sin(i + t*2*np.pi)
 
-        x = radius * math.cos(angle)
-        y = radius * math.sin(angle)
+        zoom = 0.85 + 0.15*np.sin(t*np.pi)
 
-        return x, y
+        return x, y, zoom
+
+    # SEGMENT 3 — 3D SPLIT
+    def split_depth(self, t, i):
+
+        side = -1 if i % 2 == 0 else 1
+
+        depth = 1 + t*1.2
+
+        x = self.cx + side * (400 * (1 - t))
+        y = self.cy + 80*np.sin(i + t*np.pi)
+
+        zoom = depth
+
+        return x, y, zoom
+
+    # SEGMENT 4 — RADIAL CLIMAX
+    def radial_motion(self, t, i):
+
+        angle = 2*np.pi*t + i
+
+        radius = 400 * (1 - t)
+
+        x = self.cx + radius * np.cos(angle)
+        y = self.cy + radius * np.sin(angle)
+
+        zoom = 1.3 - t
+
+        return x, y, zoom

@@ -1,5 +1,6 @@
 README.md
 pyproject.toml
+setup.py
 cinematic_engine.egg-info/PKG-INFO
 cinematic_engine.egg-info/SOURCES.txt
 cinematic_engine.egg-info/dependency_links.txt
@@ -8,6 +9,7 @@ cinematic_engine.egg-info/requires.txt
 cinematic_engine.egg-info/top_level.txt
 engine/__init__.py
 engine/audio_engine.py
+engine/auto_editor.py
 engine/cli.py
 engine/cli_runner.py
 engine/config.py
@@ -15,6 +17,7 @@ engine/easing.py
 engine/effects_engine.py
 engine/final_renderer.py
 engine/frame_generator.py
+engine/logger.py
 engine/template_engine.py
 engine/transition_engine.py
 engine/core/frame_model.py

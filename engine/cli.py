@@ -1,15 +1,21 @@
-import argparse
-from engine.cli_runner import run_engine
+import yaml
+from engine.auto_editor import AutoEditor
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Cinematic Engine CLI")
 
-    parser.add_argument("--config", required=True, help="Path to YAML config")
+    with open("config.yaml", "r") as f:
+        config = yaml.safe_load(f)
 
-    args = parser.parse_args()
+    editor = AutoEditor(
+        photo_folder=config["photos"],
+        music_file=config["music"],
+        output_file=config["output"]
+    )
 
-    run_engine(config_path=args.config)
+    print("🎬 Cinematic Engine v4.2 (Production)")
+
+    editor.run()
 
 
 if __name__ == "__main__":
