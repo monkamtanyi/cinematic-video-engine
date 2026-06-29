@@ -1,64 +1,52 @@
 import math
+import random
 
 
 class MotionEngine:
+    """
+    V2 Cinematic Motion Engine (deterministic + segment-based)
+    Replaces old hero() system entirely.
+    """
 
-    def ease(self, t):
-        return t * t * (3 - 2 * t)
+    def drift(self, t, duration, seed=0):
+        random.seed(seed)
 
-    # =========================
-    # SEGMENT 1 — HERO MOTION
-    # =========================
-    def hero(self, t, direction="left"):
+        # base velocity per image
+        vx = random.uniform(-80, 80)
+        vy = random.uniform(-50, 50)
 
-        e = self.ease(t)
+        progress = min(max(t / duration, 0), 1)
 
-        x, y = 0, 0
+        # smooth cinematic easing (ease in-out)
+        ease = 3 * progress**2 - 2 * progress**3
 
-        if direction == "left":
-            x = -1 + e
-        elif direction == "right":
-            x = 1 - e
-        elif direction == "top":
-            y = -1 + e
-        elif direction == "bottom":
-            y = 1 - e
-        elif direction == "tl":
-            x = -1 + e
-            y = -1 + e
-        elif direction == "br":
-            x = 1 - e
-            y = 1 - e
+        return vx * ease, vy * ease
 
-        return {
-            "x": x,
-            "y": y,
-            "scale": 1.35 - (0.35 * e)
-        }
+    def conveyor(self, t, speed=120):
+        """
+        horizontal cinematic scroll (like film strip)
+        """
+        return -speed * t, 0
 
-    # =========================
-    # SEGMENT 3 — MILITARY SPLIT
-    # =========================
-    def split(self, t, side="L"):
+    def split(self, t, duration, side="left"):
+        """
+        dual-lane separation motion
+        """
+        progress = min(max(t / duration, 0), 1)
+        direction = -1 if side == "left" else 1
 
-        e = self.ease(t)
-        d = -1 if side == "L" else 1
+        x = direction * (120 * progress)
+        y = 20 * math.sin(progress * math.pi)
 
-        return {
-            "x": d * (1 - e * 2),
-            "y": 0,
-            "scale": 0.6 + (0.5 * e)
-        }
+        return x, y
 
-    # =========================
-    # SEGMENT 4 — WHEEL MOTION
-    # =========================
-    def wheel(self, t, index, total):
+    def wheel(self, t, radius=250, speed=2):
+        """
+        circular carousel motion
+        """
+        angle = speed * t
 
-        angle = (2 * math.pi * index / max(total, 1)) + (t * 2 * math.pi)
+        x = radius * math.cos(angle)
+        y = radius * math.sin(angle)
 
-        return {
-            "x": math.cos(angle),
-            "y": math.sin(angle),
-            "scale": 0.4 + 0.25 * (math.sin(angle) + 1) / 2
-        }
+        return x, y

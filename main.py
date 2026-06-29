@@ -5,7 +5,7 @@ def main():
 
     editor = AutoEditor(
         photo_folder="photos",
-        music_file="music.mp3",
+        music_file="music/background_music.mp3",
         output_file="output/final.mp4"
     )
 
