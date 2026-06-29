@@ -1,14 +1,36 @@
 import os
+import sys
 import yaml
+import logging
 
 from engine.auto_editor import AutoEditor
-from engine.logger import get_logger
 
 
-log = get_logger()
+# -----------------------------
+# LOGGING (Windows-safe)
+# -----------------------------
+def setup_logger():
+    logger = logging.getLogger("cinematic-engine")
+    logger.setLevel(logging.INFO)
+
+    if not logger.handlers:
+        handler = logging.StreamHandler(sys.stdout)
+        formatter = logging.Formatter(
+            "%(asctime)s | %(levelname)s | %(message)s"
+        )
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+
+    return logger
 
 
-def load_config(path):
+log = setup_logger()
+
+
+# -----------------------------
+# CONFIG LOADER
+# -----------------------------
+def load_config(path: str):
     if not os.path.exists(path):
         raise FileNotFoundError(f"Config not found: {path}")
 
@@ -16,45 +38,75 @@ def load_config(path):
         return yaml.safe_load(f)
 
 
-def validate_config(cfg):
-    required = ["photos", "output"]
+# -----------------------------
+# ENGINE RUNNER
+# -----------------------------
+def run_engine(photo_folder=None, music_file=None, output_file=None, config_path=None):
 
-    for key in required:
-        if key not in cfg:
-            raise ValueError(f"Missing required config key: {key}")
+    log.info("Cinematic Engine Starting...")
 
-    if not os.path.exists(cfg["photos"]):
-        raise FileNotFoundError(f"Photos folder not found: {cfg['photos']}")
+    # -----------------------------
+    # LOAD CONFIG MODE
+    # -----------------------------
+    if config_path:
+        log.info(f"Loading config: {config_path}")
+        config = load_config(config_path)
 
-    if cfg.get("music") and not os.path.exists(cfg["music"]):
-        raise FileNotFoundError(f"Music file not found: {cfg['music']}")
+        photo_folder = config.get("photos")
+        music_file = config.get("music")
+        output_file = config.get("output")
 
+    # -----------------------------
+    # VALIDATION
+    # -----------------------------
+    if not photo_folder:
+        raise ValueError("photo_folder is required")
 
-def ensure_output(output_path):
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    if not output_file:
+        raise ValueError("output_file is required")
 
+    if not os.path.exists(photo_folder):
+        raise FileNotFoundError(f"Photo folder not found: {photo_folder}")
 
-def run_engine(config_path):
+    music_path = None
+    if music_file:
+        music_path = music_file
+        if not os.path.exists(music_path):
+            log.warning(f"Music file not found: {music_path}")
+            music_path = None
+
+    # ensure output directory exists
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
+
+    log.info(f"Photos: {photo_folder}")
+    log.info(f"Music: {music_path}")
+    log.info(f"Output: {output_file}")
+
+    # -----------------------------
+    # RUN ENGINE
+    # -----------------------------
     try:
-        log.info("🚀 Cinematic Engine Starting...")
-
-        cfg = load_config(config_path)
-        validate_config(cfg)
-
-        ensure_output(cfg["output"])
-
-        log.info("Loading images...")
-
         editor = AutoEditor(
-            photo_folder=cfg["photos"],
-            music_file=cfg.get("music"),
-            output_file=cfg["output"]
+            photo_folder=photo_folder,
+            music_file=music_path,
+            output_file=output_file
         )
 
         editor.run()
 
-        log.info("✅ Render complete")
+        log.info("Render complete")
 
     except Exception as e:
-        log.error(f"❌ Engine failed: {e}")
+        log.error(f"Render failed: {str(e)}")
         raise
+
+
+# -----------------------------
+# CLI TEST MODE
+# -----------------------------
+if __name__ == "__main__":
+    run_engine(
+        photo_folder="photos",
+        music_file="music/background_music.mp3",
+        output_file="output/final.mp4"
+    )
