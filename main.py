@@ -1,15 +1,11 @@
-from auto_editor import AutoEditor
+from engine.cli_runner import run_engine
 
 
 def main():
-
-    editor = AutoEditor(
-        photo_folder="photos",
-        music_file="music/background_music.mp3",
-        output_file="output/final.mp4"
-    )
-
-    editor.run()
+    try:
+        run_engine("config.yaml")
+    except Exception as e:
+        print(f"❌ Fatal error: {e}")
 
 
 if __name__ == "__main__":

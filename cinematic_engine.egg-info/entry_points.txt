@@ -1,0 +1,2 @@
+[console_scripts]
+cinematic = engine.cli:main

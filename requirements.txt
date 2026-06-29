@@ -6,3 +6,4 @@ tqdm
 moviepy
 imageio
 imageio-ffmpeg
+PyYAML
