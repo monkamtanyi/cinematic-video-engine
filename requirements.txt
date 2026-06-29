@@ -3,3 +3,6 @@ opencv-python
 Pillow
 ffmpeg-python
 tqdm
+moviepy
+imageio
+imageio-ffmpeg
