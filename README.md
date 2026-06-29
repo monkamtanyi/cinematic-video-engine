@@ -76,8 +76,50 @@ TravelVideoStudio/
 ├── output/
 
 
+##  System Architecture
 
-\## ▶️ How to Run
+The Cinematic Video Engine is structured as a modular pipeline:
+
+### 1. AutoEditor (Orchestrator)
+- Loads media assets (images + music)
+- Defines timeline structure
+- Delegates rendering to VideoRenderer
+
+### 2. MotionEngine (Animation Layer)
+- Generates procedural motion profiles
+- Handles easing, direction, and spatial transforms
+- Controls cinematic movement logic per segment
+
+### 3. VideoRenderer (Composition Engine)
+- Builds video segments using MoviePy
+- Applies motion functions to image clips
+- Composes final timeline (Segment 1–4)
+
+### 4. FFmpeg Output Layer
+- Encodes final video (H.264 / AAC)
+- Ensures platform compatibility (WhatsApp / Web / Mobile)
+
+  ##  Engineering Highlights
+
+- Procedural motion system (no hardcoded animation paths)
+- Multi-segment cinematic structure (film-style composition)
+- Real-time timeline orchestration
+- Scalable image pipeline (supports 10–200+ images)
+- FFmpeg-optimized rendering output
+
+- ## 🎬 Why This Project Matters
+
+This project demonstrates how traditional image slideshows can be transformed into a cinematic experience using programmatic motion design.
+
+
+
+It bridges:
+- Software engineering
+- Motion graphics logic
+- Video processing pipelines
+- Automation systems design
+
+\## How to Run
 
 ```bash
 
