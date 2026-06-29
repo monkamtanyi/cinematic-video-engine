@@ -1,19 +1,10 @@
 \# 🎬 Cinematic Video Engine (AI Auto Director)
 
-
-
 A Python-based cinematic video generation engine that transforms images into structured, multi-segment motion films using MoviePy.
-
-
 
 \---
 
-
-
 \## 🚀 Features
-
-
-
 \- Multi-segment cinematic pipeline
 
 \- Procedural motion engine (custom camera logic)
@@ -32,47 +23,30 @@ A Python-based cinematic video generation engine that transforms images into str
 
 \- Full automation from image folder → final MP4
 
-
-
 \---
 
 
 
 \## 🎞️ Cinematic Structure
 
-
-
 \# Segment 1 — Hero Motion Flow (50%)
 
 Multi-directional entry, center pause, zoom dynamics, and directional exits.
-
-
 
 \# Segment 2 — Conveyor Film Strip (15%)
 
 Sequential image flow across screen with controlled spacing.
 
-
-
 \# Segment 3 — Military Split (15%)
 
 Paired images approach viewer and split left/right.
-
-
 
 \# Segment 4 — Circular Wheel (20%)
 
 Images orbit in a rotating cinematic wheel motion.
 
 
-
-\---
-
-
-
 \# 🛠 Tech Stack
-
-
 
 \- Python
 
@@ -83,14 +57,7 @@ Images orbit in a rotating cinematic wheel motion.
 \- FFmpeg
 
 
-
-\---
-
-
-
 \## 📁 Project Structure
-
-
 
 TravelVideoStudio/
 
@@ -110,33 +77,21 @@ TravelVideoStudio/
 
 
 
-
-
-\---
-
-
-
 \## ▶️ How to Run
-
-
 
 ```bash
 
 python main.py
 
 
-
 🎬 Output
 
-
-
 Generates a fully automated cinematic MP4 video from images + optional music.
-
+Watch the cinematic render:
+https://github.com/monkamtanyi/cinematic-video-engine/releases/download/v1.0/final.mp4
 
 
 📌 Author
-
-
 
 Andreas Mokam
 
