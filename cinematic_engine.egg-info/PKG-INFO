@@ -11,148 +11,33 @@ Requires-Dist: imageio
 Requires-Dist: imageio-ffmpeg
 Requires-Dist: PyYAML
 
-\# 🎬 Cinematic Video Engine (AI Auto Director)
+# 🎬 Cinematic Video Engine
 
-A Python-based cinematic video generation engine that transforms images into structured, multi-segment motion films using MoviePy.
+![CI](https://github.com/YOUR_USERNAME/cinematic-video-engine/actions/workflows/render.yml/badge.svg)
 
-\---
+A modular, YAML-driven cinematic video rendering engine built with Python and MoviePy.
 
-\## 🚀 Features
-\- Multi-segment cinematic pipeline
+Transforms a folder of images + optional music into cinematic videos using a structured rendering pipeline.
 
-\- Procedural motion engine (custom camera logic)
+---
 
-\- 4-stage film structure:
+## ✨ Features
 
-&#x20; - Hero Motion Segment
+- 📸 Image-to-video slideshow generation
+- 🎵 Background music synchronization
+- 🎬 Motion-based cinematic transitions
+- ⚙️ YAML configuration system
+- 🧠 Modular architecture (engine.core)
+- 🖥️ CLI tool (`cinematic`)
+- 🚀 Installable Python package
+- 🔁 GitHub Actions CI pipeline
+- 🪵 Logging system for debugging
 
-&#x20; - Conveyor Film Strip
+---
 
-&#x20; - Military Split Formation
+## 📦 Installation
 
-&#x20; - Circular Wheel Orbit
-
-\- Music synchronization support
-
-\- Full automation from image folder → final MP4
-
-\---
-
-
-
-\## 🎞️ Cinematic Structure
-
-\# Segment 1 — Hero Motion Flow (50%)
-
-Multi-directional entry, center pause, zoom dynamics, and directional exits.
-
-\# Segment 2 — Conveyor Film Strip (15%)
-
-Sequential image flow across screen with controlled spacing.
-
-\# Segment 3 — Military Split (15%)
-
-Paired images approach viewer and split left/right.
-
-\# Segment 4 — Circular Wheel (20%)
-
-Images orbit in a rotating cinematic wheel motion.
-
-
-\# 🛠 Tech Stack
-
-\- Python
-
-\- MoviePy
-
-\- NumPy
-
-\- FFmpeg
-
-
-\## 📁 Project Structure
-
-TravelVideoStudio/
-
-├── auto\_editor.py
-
-├── video\_renderer.py
-
-├── motion\_engine.py
-
-├── engine/
-
-├── photos/
-
-├── music/
-
-├── output/
-
-
-##  System Architecture
-
-The Cinematic Video Engine is structured as a modular pipeline:
-
-### 1. AutoEditor (Orchestrator)
-- Loads media assets (images + music)
-- Defines timeline structure
-- Delegates rendering to VideoRenderer
-
-### 2. MotionEngine (Animation Layer)
-- Generates procedural motion profiles
-- Handles easing, direction, and spatial transforms
-- Controls cinematic movement logic per segment
-
-### 3. VideoRenderer (Composition Engine)
-- Builds video segments using MoviePy
-- Applies motion functions to image clips
-- Composes final timeline (Segment 1–4)
-
-### 4. FFmpeg Output Layer
-- Encodes final video (H.264 / AAC)
-- Ensures platform compatibility (WhatsApp / Web / Mobile)
-
-  ##  Engineering Highlights
-
-- Procedural motion system (no hardcoded animation paths)
-- Multi-segment cinematic structure (film-style composition)
-- Real-time timeline orchestration
-- Scalable image pipeline (supports 10–200+ images)
-- FFmpeg-optimized rendering output
-
-- ## 🎬 Why This Project Matters
-
-This project demonstrates how traditional image slideshows can be transformed into a cinematic experience using programmatic motion design.
-
-
-
-It bridges:
-- Software engineering
-- Motion graphics logic
-- Video processing pipelines
-- Automation systems design
-
-\## How to Run
+### Option 1 — Install locally (recommended)
 
 ```bash
-
-python main.py
-
-
-🎬 Output
-
-Generates a fully automated cinematic MP4 video from images + optional music.
-Watch the cinematic render:
-https://github.com/monkamtanyi/cinematic-video-engine/releases/download/v1.0/final.mp4
-
-
-📌 Author
-
-Andreas Mokam
-
-DevOps Engineer | Automation | Cloud | Media Pipelines
-
-
-
-
-
+pip install -e .

@@ -6,4 +6,4 @@ video:
   fps: 24
 
 render:
-  segment_duration: 8
+  segment_duration: 3
