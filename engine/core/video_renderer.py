@@ -1,174 +1,87 @@
 import os
-from moviepy.editor import (
-    ImageClip,
-    AudioFileClip,
-    concatenate_videoclips,
-    afx
-)
+import numpy as np
+from PIL import Image
+
+from moviepy.editor import VideoClip, AudioFileClip
 
 from engine.core.motion_engine import MotionEngine
+from engine.core.segment_engine import SegmentEngine
 
 
 class VideoRenderer:
-    """
-    Cinematic Engine V2 - Stable Production Renderer
 
-    Features:
-    - 4 cinematic motion segments
-    - deterministic motion engine
-    - robust audio sync (loop/trim + fade)
-    - FFmpeg-safe export pipeline
-    """
+    def __init__(self, output_path, fps=24):
 
-    def __init__(self, output_file):
-        self.output_file = output_file
-        self.m = MotionEngine()
+        self.output_path = output_path
+        self.fps = fps
 
-        self.seed = 42
+        self.motion = MotionEngine()
+        self.segmenter = SegmentEngine()
 
-    # ---------------- CLIP BUILDER ---------------- #
+        self.size = (1920, 1080)
 
-    def _make_clip(self, frame_path, duration, motion_fn):
-        clip = ImageClip(frame_path).set_duration(duration)
+    def _load(self, frames):
 
-        def pos(t):
-            dx, dy = motion_fn(t)
-            return (dx, dy)
+        return [
+            Image.open(f).convert("RGB").resize(self.size)
+            for f in frames
+        ]
 
-        return clip.set_position(pos)
+    def render(self, frames, music_path=None, segment_duration=3):
 
-    # ---------------- SEGMENT 1 ---------------- #
+        images = self._load(frames)
+        total = len(images)
 
-    def seg1(self, frames, duration):
-        clips = []
-        per = duration / len(frames)
+        duration = total * segment_duration
 
-        for i, f in enumerate(frames):
+        def make_frame(t):
 
-            def motion(t, i=i):
-                return self.m.drift(t + i * 0.1, per, seed=self.seed + i)
+            idx = min(int(t / segment_duration), total - 1)
+            local_t = (t % segment_duration) / segment_duration
 
-            clips.append(self._make_clip(f, per, motion))
+            seg = self.segmenter.resolve(idx, total)
 
-        return concatenate_videoclips(clips, method="compose")
+            img = np.array(images[idx])
 
-    # ---------------- SEGMENT 2 ---------------- #
+            if seg == "field_motion":
+                x, y, z = self.motion.field_motion(local_t, idx)
 
-    def seg2(self, frames, duration):
-        clips = []
-        per = duration / len(frames)
+            elif seg == "conveyor":
+                x, y, z = self.motion.conveyor(local_t, idx)
 
-        for f in frames:
-            clips.append(
-                self._make_clip(
-                    f,
-                    per,
-                    lambda t: self.m.conveyor(t, speed=120)
-                )
-            )
+            elif seg == "split_depth":
+                x, y, z = self.motion.split_depth(local_t, idx)
 
-        return concatenate_videoclips(clips, method="compose")
+            else:
+                x, y, z = self.motion.radial_motion(local_t, idx)
 
-    # ---------------- SEGMENT 3 ---------------- #
+            pil = Image.fromarray(img)
 
-    def seg3(self, frames, duration):
-        clips = []
-        per = duration / len(frames)
+            w = max(1, int(1920 * z))
+            h = max(1, int(1080 * z))
 
-        for i, f in enumerate(frames):
-            side = "left" if i % 2 == 0 else "right"
+            pil = pil.resize((w, h))
 
-            clips.append(
-                self._make_clip(
-                    f,
-                    per,
-                    lambda t, s=side: self.m.split(t, per, side=s)
-                )
-            )
+            canvas = Image.new("RGB", self.size)
 
-        return concatenate_videoclips(clips, method="compose")
+            x_pos = int(x - w / 2)
+            y_pos = int(y - h / 2)
 
-    # ---------------- SEGMENT 4 ---------------- #
+            canvas.paste(pil, (x_pos, y_pos))
 
-    def seg4(self, frames, duration):
-        clips = []
-        per = duration / len(frames)
+            return np.array(canvas)
 
-        for i, f in enumerate(frames):
-            clips.append(
-                self._make_clip(
-                    f,
-                    per,
-                    lambda t, i=i: self.m.wheel(t + i * 0.2, radius=250, speed=2)
-                )
-            )
+        clip = VideoClip(make_frame, duration=duration)
 
-        return concatenate_videoclips(clips, method="compose")
+        if music_path and os.path.exists(music_path):
+            audio = AudioFileClip(music_path)
+            audio = audio.audio_loop(duration=clip.duration)
+            clip = clip.set_audio(audio)
 
-    # ---------------- AUDIO ENGINE ---------------- #
-
-    def _attach_audio(self, final, music_path):
-
-        if not music_path or not os.path.exists(music_path):
-            print("⚠️ No audio found:", music_path)
-            return final
-
-        print("🎵 Loading audio:", music_path)
-
-        audio = AudioFileClip(music_path)
-
-        print("🎵 Audio duration:", audio.duration)
-        print("🎬 Video duration:", final.duration)
-
-        # match durations safely
-        if audio.duration < final.duration:
-            audio = afx.audio_loop(audio, duration=final.duration)
-        else:
-            audio = audio.subclip(0, final.duration)
-
-        audio = audio.audio_fadein(1.0).audio_fadeout(1.0)
-
-        final = final.set_audio(audio)
-
-        print("🎵 AUDIO ATTACHED SUCCESSFULLY")
-
-        return final
-
-    # ---------------- RENDER PIPELINE ---------------- #
-
-    def render(self, frames, music_path=None):
-
-        print("Rendering video...")
-
-        total = 8  # seconds per segment block
-
-        seg1 = self.seg1(frames, total * 0.5)
-        seg2 = self.seg2(frames, total * 0.5)
-        seg3 = self.seg3(frames, total * 0.5)
-        seg4 = self.seg4(frames, total * 0.5)
-
-        final = concatenate_videoclips(
-            [seg1, seg2, seg3, seg4],
-            method="compose"
-        )
-
-        final = self._attach_audio(final, music_path)
-
-        print("FINAL DURATION:", final.duration)
-        print("HAS AUDIO:", final.audio is not None)
-
-        final.write_videofile(
-            self.output_file,
-            fps=24,
+        clip.write_videofile(
+            self.output_path,
+            fps=self.fps,
             codec="libx264",
             audio_codec="aac",
-            temp_audiofile="temp-audio.m4a",
-            remove_temp=True,
-            threads=4,
-            ffmpeg_params=[
-                "-pix_fmt", "yuv420p",
-                "-movflags", "+faststart"
-            ]
+            threads=2
         )
-
-        print("DONE")
