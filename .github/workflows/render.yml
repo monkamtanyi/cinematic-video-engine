@@ -38,3 +38,4 @@ jobs:
           python -c "from auto_editor import AutoEditor; print('AutoEditor OK')"
           python -c "from engine.core.video_renderer import VideoRenderer; print('VideoRenderer OK')"
           python -c "from engine.core.motion_engine import MotionEngine; print('MotionEngine OK')"
+          

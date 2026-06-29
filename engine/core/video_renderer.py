@@ -1,149 +1,174 @@
-from moviepy.editor import *
 import os
-import math
+from moviepy.editor import (
+    ImageClip,
+    AudioFileClip,
+    concatenate_videoclips,
+    afx
+)
+
 from engine.core.motion_engine import MotionEngine
 
 
 class VideoRenderer:
+    """
+    Cinematic Engine V2 - Stable Production Renderer
 
-    def __init__(self, output_path, w=1080, h=1920):
-        self.output_path = output_path
-        self.w = w
-        self.h = h
+    Features:
+    - 4 cinematic motion segments
+    - deterministic motion engine
+    - robust audio sync (loop/trim + fade)
+    - FFmpeg-safe export pipeline
+    """
+
+    def __init__(self, output_file):
+        self.output_file = output_file
         self.m = MotionEngine()
 
-    def cover(self, clip):
-        iw, ih = clip.size
-        s = max(self.w / iw, self.h / ih)
+        self.seed = 42
 
-        clip = clip.resize(s)
+    # ---------------- CLIP BUILDER ---------------- #
 
-        return clip.crop(
-            x_center=clip.w / 2,
-            y_center=clip.h / 2,
-            width=self.w,
-            height=self.h
-        )
+    def _make_clip(self, frame_path, duration, motion_fn):
+        clip = ImageClip(frame_path).set_duration(duration)
 
-    def to_pos(self, m):
-        return (
-            (m["x"] * self.w / 2) + self.w / 2,
-            (m["y"] * self.h / 2) + self.h / 2
-        )
+        def pos(t):
+            dx, dy = motion_fn(t)
+            return (dx, dy)
 
-    # SEGMENT 1
+        return clip.set_position(pos)
+
+    # ---------------- SEGMENT 1 ---------------- #
+
     def seg1(self, frames, duration):
-
         clips = []
         per = duration / len(frames)
 
-        dirs = ["left", "right", "top", "bottom", "tl", "br"]
-
         for i, f in enumerate(frames):
 
-            clip = self.cover(ImageClip(f)).set_duration(per)
+            def motion(t, i=i):
+                return self.m.drift(t + i * 0.1, per, seed=self.seed + i)
 
-            d = dirs[i % len(dirs)]
-
-            def pos(t, i=i, d=d):
-                m = self.m.hero(t / per, d)
-                return self.to_pos(m)
-
-            def scale(t):
-                m = self.m.hero(t / per, d)
-                return m["scale"]
-
-            clips.append(clip.set_position(pos).resize(scale))
+            clips.append(self._make_clip(f, per, motion))
 
         return concatenate_videoclips(clips, method="compose")
 
-    # SEGMENT 2
+    # ---------------- SEGMENT 2 ---------------- #
+
     def seg2(self, frames, duration):
-
         clips = []
-        per = duration
+        per = duration / len(frames)
 
-        spacing = self.w * 0.3
+        for f in frames:
+            clips.append(
+                self._make_clip(
+                    f,
+                    per,
+                    lambda t: self.m.conveyor(t, speed=120)
+                )
+            )
 
-        for i, f in enumerate(frames):
+        return concatenate_videoclips(clips, method="compose")
 
-            clip = self.cover(ImageClip(f)).resize(width=self.w * 0.3).set_duration(per)
+    # ---------------- SEGMENT 3 ---------------- #
 
-            def pos(t, i=i):
-                x = (i * spacing) - (t * self.w * 0.8)
-                return (x, self.h * 0.35)
-
-            clips.append(clip.set_position(pos))
-
-        return CompositeVideoClip(clips, size=(self.w, self.h)).set_duration(per)
-
-    # SEGMENT 3
     def seg3(self, frames, duration):
-
         clips = []
-        pairs = [frames[i:i+2] for i in range(0, len(frames), 2)]
-        per = duration / len(pairs)
-
-        for pair in pairs:
-
-            if len(pair) < 2:
-                continue
-
-            left = self.cover(ImageClip(pair[0])).resize(width=self.w * 0.4)
-            right = self.cover(ImageClip(pair[1])).resize(width=self.w * 0.4)
-
-            def lpos(t):
-                m = self.m.split(t / per, "L")
-                return self.to_pos(m)
-
-            def rpos(t):
-                m = self.m.split(t / per, "R")
-                return self.to_pos(m)
-
-            clips.append(left.set_duration(per).set_position(lpos))
-            clips.append(right.set_duration(per).set_position(rpos))
-
-        return CompositeVideoClip(clips, size=(self.w, self.h)).set_duration(duration)
-
-    # SEGMENT 4
-    def seg4(self, frames, duration):
-
-        clips = []
-        per = duration
-
-        total = len(frames)
+        per = duration / len(frames)
 
         for i, f in enumerate(frames):
+            side = "left" if i % 2 == 0 else "right"
 
-            clip = self.cover(ImageClip(f)).resize(width=self.w * 0.3).set_duration(per)
+            clips.append(
+                self._make_clip(
+                    f,
+                    per,
+                    lambda t, s=side: self.m.split(t, per, side=s)
+                )
+            )
 
-            def pos(t, i=i):
-                m = self.m.wheel(t / per, i, total)
-                return self.to_pos(m)
+        return concatenate_videoclips(clips, method="compose")
 
-            clips.append(clip.set_position(pos))
+    # ---------------- SEGMENT 4 ---------------- #
 
-        return CompositeVideoClip(clips, size=(self.w, self.h)).set_duration(per)
+    def seg4(self, frames, duration):
+        clips = []
+        per = duration / len(frames)
 
-    # RENDER
+        for i, f in enumerate(frames):
+            clips.append(
+                self._make_clip(
+                    f,
+                    per,
+                    lambda t, i=i: self.m.wheel(t + i * 0.2, radius=250, speed=2)
+                )
+            )
+
+        return concatenate_videoclips(clips, method="compose")
+
+    # ---------------- AUDIO ENGINE ---------------- #
+
+    def _attach_audio(self, final, music_path):
+
+        if not music_path or not os.path.exists(music_path):
+            print("⚠️ No audio found:", music_path)
+            return final
+
+        print("🎵 Loading audio:", music_path)
+
+        audio = AudioFileClip(music_path)
+
+        print("🎵 Audio duration:", audio.duration)
+        print("🎬 Video duration:", final.duration)
+
+        # match durations safely
+        if audio.duration < final.duration:
+            audio = afx.audio_loop(audio, duration=final.duration)
+        else:
+            audio = audio.subclip(0, final.duration)
+
+        audio = audio.audio_fadein(1.0).audio_fadeout(1.0)
+
+        final = final.set_audio(audio)
+
+        print("🎵 AUDIO ATTACHED SUCCESSFULLY")
+
+        return final
+
+    # ---------------- RENDER PIPELINE ---------------- #
+
     def render(self, frames, music_path=None):
 
-        total = max(len(frames) * 3, 30)
+        print("Rendering video...")
 
-        seg1 = self.seg1(frames, total * 0.50)
-        seg2 = self.seg2(frames, total * 0.15)
-        seg3 = self.seg3(frames, total * 0.15)
-        seg4 = self.seg4(frames, total * 0.20)
+        total = 8  # seconds per segment block
 
-        final = concatenate_videoclips([seg1, seg2, seg3, seg4], method="compose")
+        seg1 = self.seg1(frames, total * 0.5)
+        seg2 = self.seg2(frames, total * 0.5)
+        seg3 = self.seg3(frames, total * 0.5)
+        seg4 = self.seg4(frames, total * 0.5)
 
-        if music_path and os.path.exists(music_path):
-            audio = AudioFileClip(music_path)
-            final = final.set_audio(audio.subclip(0, final.duration))
+        final = concatenate_videoclips(
+            [seg1, seg2, seg3, seg4],
+            method="compose"
+        )
+
+        final = self._attach_audio(final, music_path)
+
+        print("FINAL DURATION:", final.duration)
+        print("HAS AUDIO:", final.audio is not None)
 
         final.write_videofile(
-            self.output_path,
-            fps=30,
+            self.output_file,
+            fps=24,
             codec="libx264",
-            audio_codec="aac"
+            audio_codec="aac",
+            temp_audiofile="temp-audio.m4a",
+            remove_temp=True,
+            threads=4,
+            ffmpeg_params=[
+                "-pix_fmt", "yuv420p",
+                "-movflags", "+faststart"
+            ]
         )
+
+        print("DONE")
