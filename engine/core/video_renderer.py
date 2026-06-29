@@ -1,7 +1,7 @@
 from moviepy.editor import *
 import os
 import math
-from motion_engine import MotionEngine
+from engine.core.motion_engine import MotionEngine
 
 
 class VideoRenderer:

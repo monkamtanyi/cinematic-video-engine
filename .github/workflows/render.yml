@@ -1,0 +1,40 @@
+name: Cinematic Engine CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  test-render:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Verify Imports
+        run: |
+          python -c "from auto_editor import AutoEditor; print('AutoEditor OK')"
+          python -c "from engine.core.video_renderer import VideoRenderer; print('VideoRenderer OK')"
+          python -c "from engine.core.motion_engine import MotionEngine; print('MotionEngine OK')"

@@ -1,5 +1,5 @@
 import os
-from video_renderer import VideoRenderer
+from engine.core.video_renderer import VideoRenderer
 
 
 class AutoEditor:
