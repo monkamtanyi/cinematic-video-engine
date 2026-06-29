@@ -6,7 +6,7 @@ on:
   pull_request:
 
 jobs:
-  test-render:
+  test:
     runs-on: ubuntu-latest
 
     steps:
@@ -18,10 +18,19 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Install dependencies
+      - name: Upgrade pip
         run: |
-          pip install -r requirements.txt
+          python -m pip install --upgrade pip
+
+      - name: Install system dependencies (FFMPEG)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Install Python dependencies
+        run: |
+          pip install moviepy numpy imageio imageio-ffmpeg
 
       - name: Validate imports
         run: |
-          python -c "import auto_editor; import video_renderer; import motion_engine; print('CI OK')"
+          python -c "import moviepy; import auto_editor; import video_renderer; import motion_engine; print('CI OK')"
