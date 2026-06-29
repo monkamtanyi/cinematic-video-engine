@@ -14,26 +14,25 @@ class AutoEditor:
 
     def _load_images(self):
 
-        return sorted([
+        if not os.path.exists(self.photo_folder):
+            raise FileNotFoundError("Photo folder not found")
+
+        images = sorted([
             os.path.join(self.photo_folder, f)
             for f in os.listdir(self.photo_folder)
             if f.lower().endswith((".jpg", ".jpeg", ".png", ".webp"))
         ])
 
+        if not images:
+            raise ValueError("No images found in folder")
+
+        return images
+
     def run(self):
 
-        print("Loading images...")
-
         frames = self._load_images()
-
-        if not frames:
-            raise Exception("No images found")
-
-        print("Rendering video...")
 
         self.renderer.render(
             frames=frames,
             music_path=self.music_file
         )
-
-        print("DONE")
