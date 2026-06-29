@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cinematic-engine"
+version = "1.2.0"
+description = "AI-assisted cinematic video rendering engine"
+readme = "README.md"
+requires-python = ">=3.10"
+
+dependencies = [
+"moviepy",
+"numpy",
+"Pillow",
+"imageio",
+"imageio-ffmpeg",
+"PyYAML"
+]
+
+[project.scripts]
+cinematic = "engine.cli:main"
