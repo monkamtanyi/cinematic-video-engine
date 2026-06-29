@@ -1,23 +1,15 @@
 import argparse
-from auto_editor import AutoEditor
+from engine.cli_runner import run_engine
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Cinematic Video Engine")
+    parser = argparse.ArgumentParser(description="Cinematic Engine CLI")
 
-    parser.add_argument("--photos", required=True)
-    parser.add_argument("--music", required=True)
-    parser.add_argument("--output", required=True)
+    parser.add_argument("--config", required=True, help="Path to YAML config")
 
     args = parser.parse_args()
 
-    editor = AutoEditor(
-        photo_folder=args.photos,
-        music_file=args.music,
-        output_file=args.output
-    )
-
-    editor.run()
+    run_engine(config_path=args.config)
 
 
 if __name__ == "__main__":
