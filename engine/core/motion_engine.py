@@ -7,58 +7,72 @@ class MotionEngine:
         self.cx = 960
         self.cy = 540
 
-    # smooth easing (important for cinematic feel)
-    def ease(self, t):
-        return 3*t**2 - 2*t**3
+    # -------------------------------------------------
+    # SEGMENT 1 (FIXED)
+    # bottom → center → pause → zoom → exit
+    # -------------------------------------------------
+    def segment_1(self, t, idx):
 
-    # SEGMENT 1 — HERO MOTION (multi-directional + zoom wave)
-    def field_motion(self, t, i):
+        # bottom → center
+        y = 1080 - (t * 540)
 
-        e = self.ease(t)
+        # pause + zoom pulse
+        zoom = 1.0 + 0.05 * np.sin(t * np.pi * 2)
 
-        x = self.cx + 300*np.sin(2*np.pi*e + i)
-        y = self.cy + 180*np.cos(2*np.pi*e + i*0.5)
+        # exit
+        if t > 0.75:
+            y -= (t - 0.75) * 1200
 
-        zoom = 1 + 0.25*np.sin(np.pi * e)
+        return self.cx, y, zoom
 
-        return x, y, zoom
+    # -------------------------------------------------
+    # SEGMENT 2 - FILMSTRIP
+    # -------------------------------------------------
+    def segment_2(self, t, idx):
 
-    # SEGMENT 2 — CONVEYOR BELT
-    def conveyor(self, t, i):
+        x = 1920 + idx * 200 - (t * 1200)
+        y = self.cy
 
-        spacing = 250
-
-        x = 1920 - (1920 + spacing) * t + (i % 8) * spacing
-        y = self.cy + 60*np.sin(i + t*2*np.pi)
-
-        zoom = 0.85 + 0.15*np.sin(t*np.pi)
-
-        return x, y, zoom
-
-    # SEGMENT 3 — 3D SPLIT
-    def split_depth(self, t, i):
-
-        side = -1 if i % 2 == 0 else 1
-
-        depth = 1 + t*1.2
-
-        x = self.cx + side * (400 * (1 - t))
-        y = self.cy + 80*np.sin(i + t*np.pi)
-
-        zoom = depth
+        zoom = 1.0 + 0.03 * np.sin(t * np.pi * 2)
 
         return x, y, zoom
 
-    # SEGMENT 4 — RADIAL CLIMAX
-    def radial_motion(self, t, i):
+    # -------------------------------------------------
+    # SEGMENT 3 - CORRIDOR PEEL
+    # -------------------------------------------------
+    def segment_3(self, t, idx):
 
-        angle = 2*np.pi*t + i
+        offset = (idx % 2) * 120 - 60
+        x = self.cx + offset + (t * (-300 if idx % 2 == 0 else 300))
+        y = self.cy
 
-        radius = 400 * (1 - t)
-
-        x = self.cx + radius * np.cos(angle)
-        y = self.cy + radius * np.sin(angle)
-
-        zoom = 1.3 - t
+        zoom = 1.0
 
         return x, y, zoom
+
+    # -------------------------------------------------
+    # SEGMENT 4 - WHEEL → STAR → CIRCLE
+    # -------------------------------------------------
+    def segment_4(self, t, idx, total):
+
+        phase = t
+
+        if phase < 0.33:
+            angle = phase * 2 * np.pi
+            x = self.cx + 200 * np.cos(angle + idx)
+            y = self.cy + 200 * np.sin(angle + idx)
+
+        elif phase < 0.66:
+            # star
+            star_map = [(0, -200), (-200, 0), (0, 200), (200, 0)]
+            x, y = star_map[idx % 4]
+            x += self.cx
+            y += self.cy
+
+        else:
+            # circle
+            angle = (idx / total) * 2 * np.pi
+            x = self.cx + 180 * np.cos(angle)
+            y = self.cy + 180 * np.sin(angle)
+
+        return x, y, 1.0
