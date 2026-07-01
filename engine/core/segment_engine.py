@@ -1,19 +1,17 @@
 class SegmentEngine:
+    """
+    v1.0 Segment Router (Stable Production Logic)
+    """
 
     def resolve(self, i, total):
-
         p = i / max(1, total)
 
-        # 4 CLEAN CINEMATIC SEGMENTS
-
+        # LOCKED SEGMENTS (your final design)
         if p < 0.50:
-            return "field_motion"      # HERO SEGMENT (50%)
-
+            return 0   # Segment A
         elif p < 0.65:
-            return "conveyor"          # FLOW SEGMENT (15%)
-
+            return 1   # Segment B
         elif p < 0.80:
-            return "split_depth"       # 3D SEGMENT (15%)
-
+            return 2   # Segment C
         else:
-            return "radial_motion"     # CLIMAX SEGMENT (20%)
+            return 3   # Segment D
