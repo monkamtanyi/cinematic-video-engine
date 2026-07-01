@@ -1,11 +1,45 @@
-from engine.cli_runner import run_engine
+import os
+import logging
+
+from engine.core.video_renderer import VideoRenderer
+
+logging.basicConfig(level=logging.INFO)
 
 
 def main():
-    try:
-        run_engine("config.yaml")
-    except Exception as e:
-        print(f"❌ Fatal error: {e}")
+
+    print("🎬 Cinematic Engine V5 Starting...")
+
+    image_folder = r"D:\CinematicEngine\photos"
+
+    clips = [
+        os.path.join(image_folder, f)
+        for f in os.listdir(image_folder)
+        if f.lower().endswith((".jpg", ".jpeg", ".png"))
+    ]
+
+    clips.sort()
+
+    if not clips:
+        raise Exception(
+            f"No images found in {image_folder}"
+        )
+
+    music = r"D:\CinematicEngine\music\soundtrack.mp3"
+
+    renderer = VideoRenderer()
+
+    output = renderer.render(
+        clips=clips,
+        music_path=music,
+        output_file="output/final.mp4"
+    )
+
+    print()
+    print("===================================")
+    print("✅ VIDEO CREATED SUCCESSFULLY")
+    print(f"📁 {output}")
+    print("===================================")
 
 
 if __name__ == "__main__":

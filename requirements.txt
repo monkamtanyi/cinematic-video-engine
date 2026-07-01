@@ -1,9 +1,6 @@
-numpy
-opencv-python
-Pillow
-ffmpeg-python
-tqdm
-moviepy
+numpy>=1.23
+Pillow>=9.5
+moviepy==1.0.3
 imageio
 imageio-ffmpeg
-PyYAML
+tqdm

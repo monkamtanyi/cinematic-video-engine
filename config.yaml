@@ -1,6 +1,6 @@
-photos: photos
-music: music/background_music.mp3
-output: output/final.mp4
+photos: D:/CinematicEngine/photos
+music: D:/CinematicEngine/music/background_music.mp3
+output: D:/CinematicEngine/output/final.mp4
 
 video:
   fps: 24
