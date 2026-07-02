@@ -1,18 +1,15 @@
-# Python cache
+# output videos
+output/
+*.mp4
+*.m4a
+
+# python cache
 __pycache__/
 *.pyc
 
-# Output videos
-output/
-*.mp4
-
-# Audio temp files
-*.m4a
-
-# Virtual env (if you ever use one)
+# env
 venv/
-.env/
+.env
 
-# OS noise
+# system
 .DS_Store
-Thumbs.db

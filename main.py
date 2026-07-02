@@ -21,11 +21,10 @@ def main():
     clips.sort()
 
     if not clips:
-        raise Exception(
-            f"No images found in {image_folder}"
-        )
+        raise Exception(f"No images found in {image_folder}")
 
-    music = r"D:\CinematicEngine\music\soundtrack.mp3"
+    # ✅ FIXED MUSIC PATH
+    music = r"D:\CinematicEngine\music\background_music.mp3"
 
     renderer = VideoRenderer()
 
@@ -35,8 +34,7 @@ def main():
         output_file="output/final.mp4"
     )
 
-    print()
-    print("===================================")
+    print("\n===================================")
     print("✅ VIDEO CREATED SUCCESSFULLY")
     print(f"📁 {output}")
     print("===================================")

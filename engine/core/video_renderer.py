@@ -5,6 +5,7 @@ import numpy as np
 from moviepy.editor import VideoClip, AudioFileClip
 
 from engine.core.frame_engine import FrameEngine
+from engine.core.motion_engine import MotionEngine
 
 
 class VideoRenderer:
@@ -12,104 +13,26 @@ class VideoRenderer:
     def __init__(self):
 
         self.frame = FrameEngine()
+        self.motion = MotionEngine()
 
         self.W = 1080
         self.H = 1920
 
-    # --------------------------------------------------
-    # SAFE IMAGE LOADER
-    # --------------------------------------------------
-    def _load(self, path):
-
-        img = self.frame.load(path)
-
-        # fallback if FrameEngine returns None
-        if img is None:
-            raise Exception(f"Failed to load image: {path}")
-
-        return img
-
-    # --------------------------------------------------
-    # SAFE CANVAS
-    # --------------------------------------------------
-    def _canvas(self):
-
-        return np.zeros((self.H, self.W, 3), dtype=np.uint8)
-
-    # --------------------------------------------------
-    # SAFE BLIT (manual image draw fallback)
-    # --------------------------------------------------
-    def _blit(self, canvas, img, x, y, zoom):
-
-        """
-        If FrameEngine has apply_to_canvas → use it.
-        Otherwise fallback silently (no crash).
-        """
-
-        if hasattr(self.frame, "apply_to_canvas"):
-            return self.frame.apply_to_canvas(canvas, img, x, y, zoom)
-
-        # ---------------- fallback renderer ----------------
-        try:
-            import cv2
-
-            if isinstance(img, np.ndarray):
-
-                h, w = img.shape[:2]
-
-                new_w = int(w * zoom)
-                new_h = int(h * zoom)
-
-                if new_w <= 0 or new_h <= 0:
-                    return canvas
-
-                resized = cv2.resize(img, (new_w, new_h))
-
-                x = int(x - new_w / 2)
-                y = int(y - new_h / 2)
-
-                if (
-                    x >= self.W
-                    or y >= self.H
-                    or x + new_w <= 0
-                    or y + new_h <= 0
-                ):
-                    return canvas
-
-                x1 = max(0, x)
-                y1 = max(0, y)
-
-                x2 = min(self.W, x + new_w)
-                y2 = min(self.H, y + new_h)
-
-                canvas[y1:y2, x1:x2] = resized[
-                    0:(y2 - y1),
-                    0:(x2 - x1)
-                ]
-
-        except Exception:
-            pass
-
-        return canvas
-
-    # --------------------------------------------------
-    # MAIN RENDER
-    # --------------------------------------------------
-    def render(
-        self,
-        clips,
-        music_path=None,
-        output_file="output/final.mp4"
-    ):
+    def render(self, clips, music_path=None, output_file="output/final.mp4"):
 
         total = len(clips)
+        images = [self.frame.load(c) for c in clips]
 
-        images = [self._load(c) for c in clips]
-
+        # ==================================================
+        # BASE SEGMENT STRUCTURE
+        # ==================================================
         HERO_DURATION = 12
         CONVEYOR_DURATION = 12
         SPLIT_DURATION = 12
         CIRCLE_DURATION = 12
+
+        base_total = HERO_DURATION + CONVEYOR_DURATION + SPLIT_DURATION + CIRCLE_DURATION
+        HERO_DURATION = base_total * 0.5
 
         HERO_END = HERO_DURATION
         CONVEYOR_END = HERO_END + CONVEYOR_DURATION
@@ -120,133 +43,159 @@ class VideoRenderer:
 
         def make_frame(t):
 
-            canvas = self._canvas()
+            canvas = np.zeros((self.H, self.W, 3), dtype=np.uint8)
 
-            # ==================================================
-            # SEGMENT 1 - SEQUENTIAL HERO FLOW
-            # ==================================================
+            # ❌ REMOVED: global slowdown (this was breaking segment timing)
+            # t = t * 0.5
+
+            # =========================
+            # SEGMENT 1
+            # =========================
             if t < HERO_END:
 
-                per_img = HERO_DURATION / total
+                image_time = (HERO_END * 1.75) / max(1, total)
+                current_index = int(t / image_time)
 
-                for i, img in enumerate(images):
+                if current_index >= total:
+                    current_index = total - 1
 
-                    start = i * per_img
-                    end = start + per_img
+                img = images[current_index]
 
-                    if not (start <= t < end):
-                        continue
+                local_t = (t - current_index * image_time) / image_time
+                local_t = max(0.0, min(1.0, local_t))
 
-                    local_t = (t - start) / per_img
+                p = local_t * local_t * (3 - 2 * local_t)
 
-                    if local_t < 0.40:
-                        p = local_t / 0.40
+                x = self.W / 2
 
-                        x = self.W / 2
-                        y = self.H + 300 - p * (self.H / 2 + 300)
-                        zoom = 0.22
+                if p < 0.35:
+                    phase = p / 0.35
+                    y = self.H + 300 - phase * (self.H + 300 - self.H / 2)
+                    zoom = 0.18
 
-                    elif local_t < 0.60:
-                        x = self.W / 2
-                        y = self.H / 2
-                        zoom = 0.24
+                elif p < 0.65:
+                    y = self.H / 2
+                    zoom = 0.18
 
-                    elif local_t < 0.80:
-                        p = (local_t - 0.60) / 0.20
-                        x = self.W / 2
-                        y = self.H / 2
-                        zoom = 0.24 - 0.05 * math.sin(p * math.pi)
+                elif p < 0.80:
+                    phase = (p - 0.65) / 0.15
+                    y = self.H / 2
+                    zoom = 0.18 - (phase * 0.03)
 
-                    else:
-                        p = (local_t - 0.80) / 0.20
-                        x = self.W / 2
-                        y = (self.H / 2) - p * (self.H / 2 + 400)
-                        zoom = 0.22
+                elif p < 0.92:
+                    phase = (p - 0.80) / 0.12
+                    y = self.H / 2
+                    zoom = 0.15 + (phase * 0.04)
 
-                    canvas = self._blit(canvas, img, x, y, zoom)
+                else:
+                    phase = (p - 0.92) / 0.08
+                    y = self.H / 2 - phase * (self.H + 300)
+                    zoom = 0.19
 
-            # ==================================================
-            # SEGMENT 2 - CONVEYOR
-            # ==================================================
+                canvas = self.frame.apply_to_canvas(canvas, img, x, y, zoom)
+
+            # =========================
+            # SEGMENT 2
+            # =========================
             elif t < CONVEYOR_END:
 
                 p = (t - HERO_END) / CONVEYOR_DURATION
-                spacing = 260
+
+                spacing = 230
+                travel = self.W + spacing * total + 900
+                base_x = self.W + 450
 
                 for i, img in enumerate(images):
-
-                    x = (
-                        self.W + 500
-                        - p * (self.W + spacing * total + 1200)
-                        + i * spacing
-                    )
-
-                    y = 450 + (i % 3) * 420
+                    x = base_x - (p * travel) + (i * spacing)
+                    y = self.H / 2
                     zoom = 0.22
+                    canvas = self.frame.apply_to_canvas(canvas, img, x, y, zoom)
 
-                    canvas = self._blit(canvas, img, x, y, zoom)
-
-            # ==================================================
-            # SEGMENT 3 - SPLIT
-            # ==================================================
+            # =========================
+            # SEGMENT 3
+            # =========================
             elif t < SPLIT_END:
 
-                p = (t - CONVEYOR_END) / SPLIT_DURATION
+                raw_p = (t - CONVEYOR_END) / SPLIT_DURATION
 
-                for i, img in enumerate(images):
+                # kept subtle slow-motion only here (safe)
+                p = raw_p * 0.75
 
-                    left = (i % 2 == 0)
-                    lane = -260 if left else 260
-                    row = i // 2
+                slot_time = 1.0 / max(1, total)
+                idx = min(int(p / slot_time), total - 1)
 
-                    if p < 0.60:
+                img = images[idx]
 
-                        x = self.W / 2 + lane
-                        y = self.H - row * 120 - p * 1200
+                local_p = (p - idx * slot_time) / slot_time
+                local_p = max(0.0, min(1.0, local_p))
 
-                    else:
+                e = local_p * local_p * (3 - 2 * local_p)
 
-                        split = (p - 0.60) / 0.40
+                depth = 1.0 + e * 2.5
+                base_y = self.H / 2 + 300 * (1 - e)
 
-                        x = self.W / 2 + lane + lane * split * 2.5
-                        y = 500 + row * 80
+                is_left = (idx % 2 == 0)
+                spread = 80 + e * 500
 
-                    zoom = 0.20 + p * 0.15
+                if is_left:
+                    x = self.W / 2 - spread * depth
+                    exit_x = -400
+                else:
+                    x = self.W / 2 + spread * depth
+                    exit_x = self.W + 400
 
-                    canvas = self._blit(canvas, img, x, y, zoom)
+                if e > 0.75:
+                    exit_p = (e - 0.75) / 0.25
+                    x = x + (exit_x - x) * exit_p
+                    base_y += exit_p * 50
 
-            # ==================================================
-            # SEGMENT 4 - WHEEL
-            # ==================================================
+                zoom = 0.20 + e * 0.35
+
+                canvas = self.frame.apply_to_canvas(canvas, img, x, base_y, zoom)
+
+            # =========================
+            # SEGMENT 4
+            # =========================
             else:
 
                 p = (t - SPLIT_END) / CIRCLE_DURATION
-                radius = 850
-                rot = p * 4 * math.pi
+
+                rot = p * 6 * math.pi
+                radius = 900
+                base_zoom = 0.09
 
                 for i, img in enumerate(images):
 
-                    a = (2 * math.pi * i / total) + rot
+                    angle = (2 * math.pi * i / max(1, total)) + rot
 
-                    x = self.W / 2 + radius * math.cos(a)
-                    y = self.H / 2 + radius * math.sin(a)
+                    x = self.W / 2 + radius * math.cos(angle)
+                    y = self.H / 2 + radius * math.sin(angle)
 
-                    zoom = 0.18
+                    star_push = 1.0 + 0.25 * math.sin(5 * angle + p * 6)
 
-                    canvas = self._blit(canvas, img, x, y, zoom)
+                    x *= star_push
+                    y *= star_push
+
+                    canvas = self.frame.apply_to_canvas(canvas, img, x, y, base_zoom)
 
             return canvas
 
+        # =========================
+        # VIDEO + AUDIO (UNCHANGED WORKING FIX)
+        # =========================
         video = VideoClip(make_frame, duration=total_duration)
 
-        if music_path and os.path.exists(music_path):
+        audio = None
 
-            audio = AudioFileClip(music_path)
+        if music_path:
+            music_path = os.path.abspath(music_path)
 
-            if audio.duration > total_duration:
-                audio = audio.subclip(0, total_duration)
+            if os.path.exists(music_path):
+                audio = AudioFileClip(music_path)
 
-            video = video.set_audio(audio)
+                audio = audio.subclip(0, min(audio.duration, total_duration))
+
+                video = video.set_audio(audio)
 
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
@@ -254,8 +203,16 @@ class VideoRenderer:
             output_file,
             fps=30,
             codec="libx264",
+            audio=True,
+            audio_codec="aac",
             bitrate="6000k",
-            audio_codec="aac"
+            ffmpeg_params=[
+                "-pix_fmt", "yuv420p",
+                "-movflags", "+faststart"
+            ]
         )
+
+        if audio:
+            audio.close()
 
         return output_file
