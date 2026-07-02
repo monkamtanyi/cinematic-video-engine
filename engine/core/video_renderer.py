@@ -45,9 +45,6 @@ class VideoRenderer:
 
             canvas = np.zeros((self.H, self.W, 3), dtype=np.uint8)
 
-            # ❌ REMOVED: global slowdown (this was breaking segment timing)
-            # t = t * 0.5
-
             # =========================
             # SEGMENT 1
             # =========================
@@ -112,14 +109,14 @@ class VideoRenderer:
                     canvas = self.frame.apply_to_canvas(canvas, img, x, y, zoom)
 
             # =========================
-            # SEGMENT 3
+            # SEGMENT 3 (50% SPEED)
             # =========================
             elif t < SPLIT_END:
 
                 raw_p = (t - CONVEYOR_END) / SPLIT_DURATION
 
-                # kept subtle slow-motion only here (safe)
-                p = raw_p * 0.75
+                # ✔ 50% speed (FIXED)
+                p = raw_p * 0.5
 
                 slot_time = 1.0 / max(1, total)
                 idx = min(int(p / slot_time), total - 1)
@@ -154,11 +151,14 @@ class VideoRenderer:
                 canvas = self.frame.apply_to_canvas(canvas, img, x, base_y, zoom)
 
             # =========================
-            # SEGMENT 4
+            # SEGMENT 4 (50% SPEED FIXED)
             # =========================
             else:
 
-                p = (t - SPLIT_END) / CIRCLE_DURATION
+                raw_p = (t - SPLIT_END) / CIRCLE_DURATION
+
+                # ✔ 50% speed applied here
+                p = raw_p * 0.5
 
                 rot = p * 6 * math.pi
                 radius = 900
@@ -181,7 +181,7 @@ class VideoRenderer:
             return canvas
 
         # =========================
-        # VIDEO + AUDIO (UNCHANGED WORKING FIX)
+        # VIDEO + AUDIO
         # =========================
         video = VideoClip(make_frame, duration=total_duration)
 
@@ -192,9 +192,7 @@ class VideoRenderer:
 
             if os.path.exists(music_path):
                 audio = AudioFileClip(music_path)
-
                 audio = audio.subclip(0, min(audio.duration, total_duration))
-
                 video = video.set_audio(audio)
 
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
