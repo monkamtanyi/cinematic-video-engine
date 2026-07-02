@@ -116,7 +116,7 @@ class VideoRenderer:
                 raw_p = (t - CONVEYOR_END) / SPLIT_DURATION
 
                 # ✔ 50% speed (FIXED)
-                p = raw_p * 0.5
+                p = raw_p * 0.4
 
                 slot_time = 1.0 / max(1, total)
                 idx = min(int(p / slot_time), total - 1)
@@ -160,7 +160,7 @@ class VideoRenderer:
                 # ✔ 50% speed applied here
                 p = raw_p * 0.5
 
-                rot = p * 6 * math.pi
+                rot = p * 3 * math.pi
                 radius = 900
                 base_zoom = 0.09
 
