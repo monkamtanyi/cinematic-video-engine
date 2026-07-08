@@ -44,3 +44,8 @@ Current engine supports:
 ---
 
 # 🏗️ Architecture
+![Python](https://img.shields.io/badge/Python-3.x-blue)
+![AI](https://img.shields.io/badge/AI-Generative%20AI-purple)
+![Gradio](https://img.shields.io/badge/UI-Gradio-orange)
+![FFmpeg](https://img.shields.io/badge/Video-FFmpeg-green)
+![HuggingFace](https://img.shields.io/badge/Deployment-HuggingFace-yellow)
