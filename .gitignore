@@ -16,3 +16,12 @@ venv/
 # OS noise
 .DS_Store
 Thumbs.db
+# Internal development metadata
+.refact/
+
+# User uploaded content
+uploads/
+
+# Temporary generated files
+tmp/
+temp/
