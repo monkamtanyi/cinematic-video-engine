@@ -1,30 +1,46 @@
-# 🎬 Cinematic Video Engine
+# 🎬 Cinematic Engine
 
-![CI](https://github.com/YOUR_USERNAME/cinematic-video-engine/actions/workflows/render.yml/badge.svg)
+## AI-Powered Cinematic Video Generation Platform
 
-A modular, YAML-driven cinematic video rendering engine built with Python and MoviePy.
+Cinematic Engine is a Python-based AI-assisted video creation platform that transforms images and music into cinematic videos using custom motion algorithms, automated rendering pipelines, and cloud deployment.
 
-Transforms a folder of images + optional music into cinematic videos using a structured rendering pipeline.
-
----
-
-## ✨ Features
-
-- 📸 Image-to-video slideshow generation
-- 🎵 Background music synchronization
-- 🎬 Motion-based cinematic transitions
-- ⚙️ YAML configuration system
-- 🧠 Modular architecture (engine.core)
-- 🖥️ CLI tool (`cinematic`)
-- 🚀 Installable Python package
-- 🔁 GitHub Actions CI pipeline
-- 🪵 Logging system for debugging
+The goal is to build a production-grade AI video generation engine capable of creating professional travel and storytelling videos automatically.
 
 ---
 
-## 📦 Installation
+# 🚀 Live Demo
 
-### Option 1 — Install locally (recommended)
+Hugging Face Space:
 
-```bash
-pip install -e .
+https://huggingface.co/spaces/monkamtanyi/cinematic-engine-v5
+
+---
+
+# ✨ Features
+
+## Current Capabilities
+
+✅ Image-to-video generation  
+✅ Custom cinematic motion engine  
+✅ Automated FFmpeg rendering pipeline  
+✅ Background music integration  
+✅ Gradio web application  
+✅ MP4 export optimized for social media  
+✅ Hugging Face deployment  
+
+
+## Cinematic Effects
+
+Current engine supports:
+
+- Hero image presentation
+- Camera movement simulation
+- Zoom transitions
+- Multi-image formations
+- Cinematic sequencing
+- Automated rendering workflow
+
+
+---
+
+# 🏗️ Architecture
