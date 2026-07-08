@@ -425,90 +425,55 @@ class VideoRenderer:
             # - continue scrolling
             # ==================================================
 
-            elif t < CONVEYOR_END:
+                        # ==================================================
+            # SEGMENT 2 - FILMSTRIP CONVEYOR
+            # ==================================================
+                        # ==================================================
+            # SEGMENT 3 - MILITARY CORRIDOR
+            # ==================================================
+            elif t < SPLIT_END:
 
+                p = (t - CONVEYOR_END) / SPLIT_DURATION
 
-                local = (
-                    t - HERO_END
-                ) / CONVEYOR_DURATION
+                left_x = self.W * 0.35
+                right_x = self.W * 0.65
 
-
-                spacing = int(
-                    self.W * 0.65
-                )
-
-
-                center_x = self.W / 2
-
+                row_spacing = self.H * 0.18
+                start_y = self.H * 0.15
 
                 for i, img in enumerate(images):
 
+                    row = i // 2
+                    left = (i % 2 == 0)
 
-                    # Each image has a fixed place
-                    # on the conveyor track
+                    if left:
+                        x0 = left_x
+                    else:
+                        x0 = right_x
 
-                    start_position = (
-                        self.W
-                        +
-                        spacing
-                    )
+                    y0 = start_y + row * row_spacing
 
+                    if p < 0.60:
 
-                    travel = (
-                        local
-                        *
-                        (
-                            self.W
-                            +
-                            spacing
-                            *
-                            (
-                                total
-                                +
-                                1
-                            )
-                        )
-                    )
+                        q = p / 0.60
 
+                        x = x0
+                        y = y0 + q * 120
 
-                    x = (
-                        start_position
-                        +
-                        i * spacing
-                        -
-                        travel
-                    )
-
-
-                    y = self.H / 2
-
-
-                    # Individual center focus
-                    # when image reaches center
-
-                    distance = abs(
-                        x - center_x
-                    )
-
-
-                    if distance < self.W * 0.10:
-
-
-                        zoom = (
-                            0.22
-                            -
-                            0.02 *
-                            math.sin(
-                                local *
-                                math.pi
-                            )
-                        )
+                        zoom = 0.10 + 0.08 * q
 
                     else:
 
-                        zoom = 0.20
+                        q = (p - 0.60) / 0.40
 
+                        if left:
+                            x = x0 - q * self.W * 0.30
+                        else:
+                            x = x0 + q * self.W * 0.30
 
+                        y = y0 + 120
+
+                        zoom = 0.18
 
                     canvas = self._blit(
                         canvas,
@@ -517,6 +482,9 @@ class VideoRenderer:
                         y,
                         zoom
                     )
+
+
+            
 
 
 
@@ -543,96 +511,57 @@ class VideoRenderer:
             # Creates corridor effect
             # ==================================================
 
+         
+
+
+                        # ==================================================
+            # SEGMENT 3 - MILITARY CORRIDOR
+            # ==================================================
             elif t < SPLIT_END:
 
+                p = (t - CONVEYOR_END) / SPLIT_DURATION
 
-                p = (
-                    t
-                    -
-                    CONVEYOR_END
-                ) / SPLIT_DURATION
+                left_x = self.W * 0.35
+                right_x = self.W * 0.65
 
+                row_spacing = self.H * 0.18
+                start_y = self.H * 0.15
 
+                for i, img in enumerate(images):
 
-                center_x = self.W / 2
+                    row = i // 2
+                    left = (i % 2 == 0)
 
+                    if left:
+                        x0 = left_x
+                    else:
+                        x0 = right_x
 
-                left_images = images[::2]
+                    y0 = start_y + row * row_spacing
 
-                right_images = images[1::2]
+                    # Phase 1 - Columns approach viewer
+                    if p < 0.60:
 
+                        q = p / 0.60
 
+                        x = x0
+                        y = y0 + q * 120
 
-                # -----------------------------
-                # LEFT COLUMN
-                # -----------------------------
+                        zoom = 0.10 + 0.08 * q
 
-                for row, img in enumerate(left_images):
-
-
-                    start_x = (
-                        center_x
-                        -
-                        self.W * 0.30
-                    )
-
-
-                    if p < 0.55:
-
-
-                        x = (
-                            start_x
-                            +
-                            p *
-                            (
-                                self.W * 0.05
-                            )
-                        )
-
-
-                        y = (
-                            250
-                            +
-                            row *
-                            260
-                        )
-
-
+                    # Phase 2 - Peel away
                     else:
 
+                        q = (p - 0.60) / 0.40
 
-                        peel = (
-                            p
-                            -
-                            0.55
-                        ) / 0.45
+                        if left:
+                            x = x0 - q * self.W * 0.30
+                        else:
+                            x = x0 + q * self.W * 0.30
 
+                        y = y0 + 120
 
-                        x = (
-                            start_x
-                            -
-                            peel *
-                            self.W *
-                            0.45
-                        )
-
-
-                        y = (
-                            450
-                            +
-                            row *
-                            120
-                        )
-
-
-
-                    zoom = (
-                        0.16
-                        +
-                        p *
-                        0.12
-                    )
-
+                        zoom = 0.18
 
                     canvas = self._blit(
                         canvas,
@@ -641,89 +570,6 @@ class VideoRenderer:
                         y,
                         zoom
                     )
-
-
-
-                # -----------------------------
-                # RIGHT COLUMN
-                # -----------------------------
-
-                for row, img in enumerate(right_images):
-
-
-                    start_x = (
-                        center_x
-                        +
-                        self.W * 0.30
-                    )
-
-
-                    if p < 0.55:
-
-
-                        x = (
-                            start_x
-                            -
-                            p *
-                            (
-                                self.W * 0.05
-                            )
-                        )
-
-
-                        y = (
-                            250
-                            +
-                            row *
-                            260
-                        )
-
-
-                    else:
-
-
-                        peel = (
-                            p
-                            -
-                            0.55
-                        ) / 0.45
-
-
-                        x = (
-                            start_x
-                            +
-                            peel *
-                            self.W *
-                            0.45
-                        )
-
-
-                        y = (
-                            450
-                            +
-                            row *
-                            120
-                        )
-
-
-
-                    zoom = (
-                        0.16
-                        +
-                        p *
-                        0.12
-                    )
-
-
-                    canvas = self._blit(
-                        canvas,
-                        img,
-                        x,
-                        y,
-                        zoom
-                    )
-
-
 
             # ==================================================
             # SEGMENT 4
@@ -734,74 +580,63 @@ class VideoRenderer:
 
             else:
 
+                p = (t - SPLIT_END) / CIRCLE_DURATION
 
-                p = (
-                    t
-                    -
-                    SPLIT_END
-                ) / CIRCLE_DURATION
-
-
+                center_x = self.W / 2
+                center_y = self.H / 2
 
                 radius = min(
                     self.W,
                     self.H
-                ) * 0.25
-
-
+                ) * 0.22
 
                 rotation = (
-                    p
-                    *
-                    4
-                    *
-                    math.pi
+                    p *
+                    2 *
+                    math.pi *
+                    2
                 )
-
-
 
                 for i, img in enumerate(images):
 
-
                     angle = (
-                        (
-                            2
-                            *
-                            math.pi
-                            *
-                            i
-                            /
-                            total
-                        )
+                        (2 * math.pi * i / total)
                         +
                         rotation
                     )
 
-
-
                     x = (
-                        self.W / 2
+                        center_x
                         +
                         radius *
-                        math.cos(
-                            angle
-                        )
+                        math.cos(angle)
                     )
-
 
                     y = (
-                        self.H / 2
+                        center_y
                         +
                         radius *
-                        math.sin(
-                            angle
+                        math.sin(angle)
+                    )
+
+                    # keep images inside canvas
+                    x = max(
+                        100,
+                        min(
+                            self.W - 100,
+                            x
                         )
                     )
 
+                    y = max(
+                        100,
+                        min(
+                            self.H - 100,
+                            y
+                        )
+                    )
 
-
-                    zoom = 0.16
-
+                    zoom = 0.12
 
 
                     canvas = self._blit(
