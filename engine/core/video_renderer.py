@@ -26,14 +26,14 @@ class VideoRenderer:
         self.W = int(
             os.getenv(
                 "VIDEO_WIDTH",
-                960
+                1080
             )
         )
 
         self.H = int(
             os.getenv(
                 "VIDEO_HEIGHT",
-                960
+                1920
             )
         )
 
@@ -547,7 +547,7 @@ class VideoRenderer:
                         x = x0
                         y = y0 + q * 120
 
-                        zoom = 0.10 + 0.08 * q
+                        zoom = 0.12 + (0.10 * q)
 
                     # Phase 2 - Peel away
                     else:
@@ -561,7 +561,7 @@ class VideoRenderer:
 
                         y = y0 + 120
 
-                        zoom = 0.18
+                        zoom = 0.22
 
                     canvas = self._blit(
                         canvas,
