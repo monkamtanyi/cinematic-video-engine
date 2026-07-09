@@ -1,51 +1,203 @@
-# 🎬 Cinematic Engine
+# AI Cinematic Video Creator Engine
 
-## AI-Powered Cinematic Video Generation Platform
+An AI-powered cinematic video generation platform that transforms user-uploaded photos and optional background music into professional vertical videos for social media.
 
-Cinematic Engine is a Python-based AI-assisted video creation platform that transforms images and music into cinematic videos using custom motion algorithms, automated rendering pipelines, and cloud deployment.
-
-The goal is to build a production-grade AI video generation engine capable of creating professional travel and storytelling videos automatically.
+The application provides an intuitive Gradio web interface and a modular rendering engine capable of producing cinematic camera movements, smooth transitions, and high-quality MP4 output. The current release is V1.7, featuring refined cinematic motion, sizing optimization, and multi-segment video composition.
 
 ---
 
-# 🚀 Live Demo
+## Project Overview
 
-Hugging Face Space:
+The AI Cinematic Video Creator Engine is a modular Python-based video generation system designed to convert static images into cinematic vertical videos.
 
-https://huggingface.co/spaces/monkamtanyi/cinematic-engine-v5
+The platform combines:
 
----
+- A Gradio web interface for user interaction
+- A modular rendering architecture
+- Custom cinematic motion logic
+- MoviePy and FFmpeg video processing
+- High-quality MP4 export
 
-# ✨ Features
-
-## Current Capabilities
-
-✅ Image-to-video generation  
-✅ Custom cinematic motion engine  
-✅ Automated FFmpeg rendering pipeline  
-✅ Background music integration  
-✅ Gradio web application  
-✅ MP4 export optimized for social media  
-✅ Hugging Face deployment  
-
-
-## Cinematic Effects
-
-Current engine supports:
-
-- Hero image presentation
-- Camera movement simulation
-- Zoom transitions
-- Multi-image formations
-- Cinematic sequencing
-- Automated rendering workflow
-
+The goal is to provide an automated workflow for creating social-media-ready cinematic videos.
 
 ---
 
-# 🏗️ Architecture
-![Python](https://img.shields.io/badge/Python-3.x-blue)
-![AI](https://img.shields.io/badge/AI-Generative%20AI-purple)
-![Gradio](https://img.shields.io/badge/UI-Gradio-orange)
-![FFmpeg](https://img.shields.io/badge/Video-FFmpeg-green)
-![HuggingFace](https://img.shields.io/badge/Deployment-HuggingFace-yellow)
+## Features
+
+- Upload multiple images
+- Optional background music
+- Automatic cinematic slideshow generation
+- Professional motion engine
+- Vertical 1080 × 1920 video output
+- MP4 export using FFmpeg
+- Browser-based Gradio interface
+- Modular rendering architecture
+- Multiple cinematic animation segments
+
+---
+
+## Architecture
+
+```text
+                User
+                  │
+                  ▼
+        Gradio Web Interface
+                  │
+                  ▼
+          VideoRenderer
+                  │
+     ┌────────────┴────────────┐
+     ▼                         ▼
+ FrameEngine            Motion Engine
+     │                         │
+     └────────────┬────────────┘
+                  ▼
+        MoviePy + FFmpeg
+                  │
+                  ▼
+        MP4 Video Output
+```
+
+---
+
+## Project Structure
+
+```text
+TravelVideoStudio-clean/
+│
+├── app.py                  # Gradio web application
+├── main.py                 # Command-line entry point
+├── README.md
+├── requirements.txt
+│
+├── engine/
+│   └── core/
+│       ├── frame_engine.py
+│       ├── motion_engine.py
+│       ├── segment_engine.py
+│       └── video_renderer.py
+│
+├── docs/
+│   ├── screenshots/
+│   └── demo/
+│
+├── input/
+├── output/
+└── assets/
+```
+
+---
+
+## Technology Stack
+
+- Python
+- Gradio
+- MoviePy
+- FFmpeg
+- NumPy
+- Pillow
+- GitHub
+
+---
+
+## Screenshots
+
+### Gradio Web Interface
+
+![Gradio UI](docs/screenshots/cinematic-engine-ui.png)
+
+### Generated Video Preview
+
+![Generated Video](docs/screenshots/generated-video.png)
+
+---
+
+## Demo Video
+
+A demonstration of the AI Cinematic Video Creator Engine.
+
+The demo shows:
+
+- Uploading images
+- Uploading optional background music
+- Generating a cinematic video
+- Final MP4 output
+
+Demo location:
+
+```text
+docs/demo/cinematic-engine-v1.7-demo.mp4
+```
+
+---
+
+## Installation
+
+Clone the repository:
+
+```bash
+git clone https://github.com/monkamtanyi/cinematic-video-engine.git
+cd cinematic-video-engine
+```
+
+Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+## Usage
+
+Launch the Gradio web application:
+
+```bash
+python app.py
+```
+
+Open your browser:
+
+```text
+http://127.0.0.1:7860
+```
+
+Workflow:
+
+1. Upload images
+2. Upload optional background music
+3. Click **Generate Video**
+4. Download the generated MP4 video
+
+---
+
+## Version History
+
+| Version | Description |
+|---|---|
+| v1.0 | Initial cinematic video engine |
+| v1.5 | Stable Gradio application with V5 renderer |
+| v1.6 | Cinematic motion refinement |
+| v1.7 | Cinematic sizing and motion polish |
+
+---
+
+## Future Roadmap
+
+Planned enhancements:
+
+- AI-selected camera movements
+- Beat synchronization
+- Animated travel maps
+- Caption generation
+- Theme engine
+- Social media publishing integration
+- Cloud deployment
+- Automated CI/CD pipeline
+
+---
+
+## License
+
+MIT License
