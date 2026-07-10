@@ -2,9 +2,13 @@
 __pycache__/
 *.pyc
 
+
 # Output videos
 output/
+
+# Ignore generated videos except demo showcase videos
 *.mp4
+!demo/cinematic_demo.mp4
 
 # Audio temp files
 *.m4a
