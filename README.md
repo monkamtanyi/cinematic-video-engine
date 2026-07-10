@@ -1,4 +1,6 @@
 # 🎬 AI Cinematic Video Creator Engine V5
+**Current Version:** V5.0  
+**Latest Release:** V1.7
 
 An AI-powered cinematic video generation engine that transforms images into professional-quality videos using automated camera motion, cinematic transitions, and a modular rendering pipeline.
 
@@ -161,31 +163,21 @@ The cinematic animation engine can be customized based on user requirements, inc
 
 ## Application Interface
 
-*Add screenshot here*
-
-```
-assets/interface.png
-```
+![Application Interface](assets/interface.png)
 
 ## Generated Cinematic Output
 
-*Add screenshot here*
-
-```
-assets/output.png
-```
+![Generated Video](assets/output.png)
 
 ---
 
 # 🎬 Example Output
 
-A sample cinematic video can be found here:
+A sample cinematic video demonstrating the AI Cinematic Video Creator Engine is available below.
 
-```
-demo/cinematic_demo.mp4
-```
+**Download the sample video:**
 
----
+[🎥 cinematic_demo.mp4](demo/cinematic_demo.mp4)`
 
 # 🔄 Development Roadmap
 
@@ -219,7 +211,9 @@ This project demonstrates software engineering practices applied to AI-powered m
 * Cloud deployment
 * Version-controlled releases
 
-The goal is to build a production-ready AI cinematic video creation platform.
+The AI Cinematic Video Creator Engine demonstrates modern software engineering practices through a modular Python architecture, automated rendering pipeline, and cloud deployment. It showcases the design and implementation of a production-oriented application capable of generating cinematic videos from user-provided images and music.
+
+The project highlights skills in Python development, software architecture, media processing, cloud deployment, and automation.
 
 ---
 
