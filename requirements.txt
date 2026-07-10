@@ -1,6 +1,9 @@
-numpy>=1.23
+gradio
+numpy<2
 Pillow>=9.5
 moviepy==1.0.3
 imageio
 imageio-ffmpeg
 tqdm
+opencv-python-headless==4.8.1.78
+ffmpeg-python
