@@ -1,4 +1,17 @@
+---
+title: AI Cinematic Video Creator Engine V5
+emoji: 🎬
+colorFrom: purple
+colorTo: blue
+sdk: gradio
+sdk_version: "5.0.0"
+python_version: "3.10"
+app_file: app.py
+pinned: false
+---
+
 # 🎬 AI Cinematic Video Creator Engine V5
+
 **Current Version:** V5.0  
 **Latest Release:** V1.7
 
@@ -12,7 +25,8 @@ The project demonstrates a complete AI media generation workflow built with Pyth
 
 Try the application:
 
-**Hugging Face Space:**
+**Hugging Face Space**
+
 https://huggingface.co/spaces/monkamtanyi/cinematic-engine-v5
 
 Upload images, add music, and generate a cinematic video automatically.
@@ -23,61 +37,61 @@ Upload images, add music, and generate a cinematic video automatically.
 
 ## 🎥 Cinematic Video Generation
 
-* Automated image-to-video transformation
-* Professional camera movement simulation
-* Cinematic zoom, pan, and motion effects
-* Multi-segment rendering pipeline
-* Social media optimized MP4 output
+- Automated image-to-video transformation
+- Professional camera movement simulation
+- Cinematic zoom, pan, and motion effects
+- Multi-segment rendering pipeline
+- Social media optimized MP4 output
 
 ## 🎬 Motion Engine
 
 Custom animation system supporting:
 
-* Vertical motion
-* Horizontal motion
-* Diagonal movement
-* Zoom effects
-* Cinematic transitions
-* Multi-image sequencing
+- Vertical motion
+- Horizontal motion
+- Diagonal movement
+- Zoom effects
+- Cinematic transitions
+- Multi-image sequencing
 
 ## ⚙️ Automated Rendering Pipeline
 
 The engine combines:
 
-* Image processing
-* Frame generation
-* Motion calculation
-* Segment orchestration
-* Video rendering
-* Audio integration
+- Image processing
+- Frame generation
+- Motion calculation
+- Segment orchestration
+- Video rendering
+- Audio integration
 
 ---
 
 # 🏗️ Architecture
 
 ```
-                 User Input
-                     |
-                     ↓
-              Image Upload
-                     |
-                     ↓
-              Frame Engine
-                     |
-                     ↓
-             Motion Engine
-                     |
-                     ↓
-            Segment Engine
-                     |
-                     ↓
-            Video Renderer
-                     |
-                     ↓
-              FFmpeg Export
-                     |
-                     ↓
-             Final MP4 Video
+User Input
+    |
+    ↓
+Image Upload
+    |
+    ↓
+Frame Engine
+    |
+    ↓
+Motion Engine
+    |
+    ↓
+Segment Engine
+    |
+    ↓
+Video Renderer
+    |
+    ↓
+FFmpeg Export
+    |
+    ↓
+Final MP4 Video
 ```
 
 ---
@@ -99,9 +113,9 @@ TravelVideoStudio
 ├── requirements.txt
 ├── README.md
 │
-├── photos/
-├── output/
-└── demo/
+├── assets/
+├── docs/
+└── output/
 ```
 
 ---
@@ -110,28 +124,28 @@ TravelVideoStudio
 
 ## Programming
 
-* Python
+- Python
 
 ## Video Processing
 
-* FFmpeg
-* MoviePy
-* ImageIO
+- FFmpeg
+- MoviePy
+- ImageIO
 
 ## Image Processing
 
-* Pillow
-* NumPy
+- Pillow
+- NumPy
 
 ## Application Interface
 
-* Gradio
+- Gradio
 
 ## Development Workflow
 
-* Git
-* GitHub
-* Hugging Face Spaces
+- Git
+- GitHub
+- Hugging Face Spaces
 
 ---
 
@@ -139,23 +153,26 @@ TravelVideoStudio
 
 The AI Cinematic Video Creator Engine can be used for:
 
-* Travel videos
-* Social media content creation
-* Photo storytelling
-* Marketing and promotional videos
-* Digital memories and personal storytelling
-* Automated video production workflows
-* Brand and product showcase videos
+- Travel videos
+- Social media content creation
+- Photo storytelling
+- Marketing and promotional videos
+- Digital memories
+- Automated video production workflows
+- Brand and product showcase videos
+
+---
 
 # 🎨 Customizable Animation Experience
 
-The cinematic animation engine can be customized based on user requirements, including:
+The cinematic animation engine supports customization including:
 
-* Different camera movement styles
-* Custom image transition effects
-* Personalized storytelling sequences
-* Unique motion patterns and visual themes
-* Customized video pacing and presentation style
+- Camera movement styles
+- Transition effects
+- Storytelling sequences
+- Motion patterns
+- Video pacing
+- Visual themes
 
 ---
 
@@ -173,56 +190,56 @@ The cinematic animation engine can be customized based on user requirements, inc
 
 # 🎬 Example Output
 
-A sample cinematic video demonstrating the AI Cinematic Video Creator Engine is available below.
+A sample cinematic video demonstrating the AI Cinematic Video Creator Engine is available through the Hugging Face Space.
 
-**Download the sample video:**
-
-[🎥 cinematic_demo.mp4](demo/cinematic_demo.mp4)`
+---
 
 # 🔄 Development Roadmap
 
 ## Completed
 
-✅ Version 1 Foundation
-✅ Modular rendering architecture
-✅ Cinematic motion engine
-✅ Gradio web interface
-✅ Hugging Face deployment
+✅ Version 1 Foundation  
+✅ Modular rendering architecture  
+✅ Cinematic motion engine  
+✅ Gradio web interface  
+✅ Hugging Face deployment  
 
 ## Future Enhancements
 
-* AI-selected camera movements
-* Beat synchronization
-* Animated travel maps
-* Caption generation
-* Advanced visual effects
-* Theme-based video creation
-* Cloud deployment automation
+- AI-selected camera movements
+- Beat synchronization
+- Animated travel maps
+- Caption generation
+- Advanced visual effects
+- Theme-based video creation
+- Cloud deployment automation
 
 ---
 
 # 👨‍💻 About This Project
 
-This project demonstrates software engineering practices applied to AI-powered media generation:
+This project demonstrates software engineering practices applied to AI-powered media generation.
 
-* Modular architecture design
-* Automated rendering workflows
-* Python application development
-* Cloud deployment
-* Version-controlled releases
+Key engineering areas:
 
-The AI Cinematic Video Creator Engine demonstrates modern software engineering practices through a modular Python architecture, automated rendering pipeline, and cloud deployment. It showcases the design and implementation of a production-oriented application capable of generating cinematic videos from user-provided images and music.
+- Modular architecture design
+- Automated rendering workflows
+- Python application development
+- Cloud deployment
+- Version-controlled releases
+- Media processing pipelines
+- Application automation
 
-The project highlights skills in Python development, software architecture, media processing, cloud deployment, and automation.
+The AI Cinematic Video Creator Engine demonstrates a production-oriented Python architecture capable of generating cinematic videos from user-provided images and music.
 
 ---
 
 # 📌 Version
 
-Current Release:
+**Current Release**
 
-**AI Cinematic Video Creator Engine V5**
+AI Cinematic Video Creator Engine V5
 
-Release Track:
+**Release Track**
 
-**V1.7**
+V1.7
