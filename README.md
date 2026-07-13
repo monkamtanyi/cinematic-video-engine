@@ -243,3 +243,42 @@ AI Cinematic Video Creator Engine V5
 **Release Track**
 
 V1.7
+
+---
+
+## License
+
+Copyright (c) 2026 Andreas T. Mokam
+
+This project is licensed under the MIT License.
+
+You are free to use, copy, modify, merge, publish, distribute, sublicense, and sell copies of this software, subject to the conditions of the MIT License.
+
+See the LICENSE file for the complete license text.
+
+---
+
+## Author
+
+**Andreas T. Mokam**
+
+Senior DevOps Engineer | Cloud Infrastructure | DevOps Automation | AI Engineering
+
+GitHub:
+https://github.com/monkamtanyi
+
+Project:
+AI Cinematic Video Creator Engine
+
+Built with:
+
+- Python
+- Gradio
+- FFmpeg
+- MoviePy
+- Pillow
+- GitHub Actions
+- Hugging Face Spaces
+
+Designed and developed by Andreas T. Mokam.
+
