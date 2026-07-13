@@ -1,4 +1,5 @@
-gradio
+gradio==5.23.3
+huggingface_hub==0.28.1
 numpy<2
 Pillow>=9.5
 moviepy==1.0.3
