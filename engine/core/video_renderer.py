@@ -14,8 +14,8 @@ class VideoRenderer:
 
     def __init__(self):
         self.frame = FrameEngine()
-        self.W = 1080
-        self.H = 1920
+        self.W = 540
+        self.H = 720
 
     # ----------------------------
     # LOAD IMAGE (STRICT)
@@ -30,6 +30,7 @@ class VideoRenderer:
     # BLIT (HARDENED - NO SILENT FAILS)
     # ----------------------------
     def _blit(self, canvas, img, x, y, zoom):
+        zoom = zoom * 0.30
         import cv2
 
         h, w = img.shape[:2]
@@ -118,9 +119,9 @@ class VideoRenderer:
         # =========================================================
         # ✅ FIX: TRUE 25% SEGMENT TIMELINE
         # =========================================================
-        fps = 24
+        fps = 15
 
-        total_duration = 96  # 4 segments × 12s each (25% each)
+        total_duration = 32  # 4 cinematic segments × 8s each
         seg_duration = total_duration / 4
 
         t1 = seg_duration
@@ -317,14 +318,76 @@ class VideoRenderer:
             # SEGMENT 4
             # ----------------------------
             else:
-                rot = p * 4 * math.pi
-                r = 820
 
-                for i2, img in enumerate(images_local):
-                    a = (2 * math.pi * i2 / len(images_local)) + rot
-                    x = self.W / 2 + r * math.cos(a)
-                    y = self.H / 2 + r * math.sin(a)
-                    canvas = self._blit(canvas, img, x, y, 0.18)
+                p = min(p, 1.0)
+
+                if p < 0.33:
+
+                    q = p / 0.33
+                    rotation = q * 4.0 * math.pi
+                    radius = 180
+
+                    for idx, img in enumerate(images_local):
+
+                        angle = (2.0 * math.pi * idx / len(images_local)) + rotation
+
+                        x = self.W / 2 + radius * math.cos(angle)
+                        y = self.H / 2 + radius * math.sin(angle)
+
+                        canvas = self._blit(
+                            canvas,
+                            img,
+                            x,
+                            y,
+                            0.22
+                        )
+
+                elif p < 0.66:
+
+                    q = (p - 0.33) / 0.33
+
+                    outer_radius = 180 - (60 * q)
+                    inner_radius = outer_radius * 0.45
+
+                    for idx, img in enumerate(images_local):
+
+                        angle = 2.0 * math.pi * idx / len(images_local)
+
+                        if idx % 2 == 0:
+                            radius = outer_radius
+                        else:
+                            radius = inner_radius
+
+                        x = self.W / 2 + radius * math.cos(angle)
+                        y = self.H / 2 + radius * math.sin(angle)
+
+                        canvas = self._blit(
+                            canvas,
+                            img,
+                            x,
+                            y,
+                            0.22
+                        )
+
+                else:
+
+                    q = (p - 0.66) / 0.34
+                    radius = 120 * (1.0 - q)
+
+                    for idx, img in enumerate(images_local):
+
+                        angle = 2.0 * math.pi * idx / len(images_local)
+
+                        x = self.W / 2 + radius * math.cos(angle)
+                        y = self.H / 2 + radius * math.sin(angle)
+
+                        canvas = self._blit(
+                            canvas,
+                            img,
+                            x,
+                            y,
+                            0.22
+                        )
 
             # ----------------------------
             # PIPE WRITE
@@ -346,3 +409,10 @@ class VideoRenderer:
         report(1.0, "done")
 
         return output_file
+
+
+
+
+
+
+
