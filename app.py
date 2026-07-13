@@ -21,7 +21,9 @@ OUTPUT_DIR = "output"
 # VIDEO GENERATION FUNCTION
 # --------------------------------------------------
 
-def generate_video(images, music):
+def generate_video(images, music, progress=gr.Progress()):
+
+    progress(0.0, desc="Starting AI Cinematic Engine...")
 
     if not images:
         raise gr.Error(
@@ -39,12 +41,15 @@ def generate_video(images, music):
 
         image_paths = []
 
-
         # ------------------------------------------
         # COPY UPLOADED IMAGES
         # ------------------------------------------
 
-        for img in images:
+        progress(0.10, desc="Preparing uploaded images...")
+
+        total = len(images)
+
+        for index, img in enumerate(images):
 
             filename = os.path.basename(img)
 
@@ -58,10 +63,12 @@ def generate_video(images, music):
                 destination
             )
 
-            image_paths.append(
-                destination
-            )
+            image_paths.append(destination)
 
+            progress(
+                0.10 + (0.20 * ((index + 1) / total)),
+                desc=f"Loading image {index + 1} of {total}"
+            )
 
         # ------------------------------------------
         # MUSIC FILE
@@ -72,7 +79,6 @@ def generate_video(images, music):
         if music:
             music_path = music
 
-
         # ------------------------------------------
         # OUTPUT
         # ------------------------------------------
@@ -82,10 +88,17 @@ def generate_video(images, music):
             "final.mp4"
         )
 
+        if os.path.exists(output_file):
+            os.remove(output_file)
 
         # ------------------------------------------
-        # RENDER CINEMATIC VIDEO
+        # RENDER
         # ------------------------------------------
+
+        progress(
+            0.35,
+            desc="Rendering cinematic video..."
+        )
 
         result = renderer.render(
             clips=image_paths,
@@ -93,20 +106,34 @@ def generate_video(images, music):
             output_file=output_file
         )
 
+        progress(
+            0.95,
+            desc="Finalizing video..."
+        )
+
+        if result is None:
+            result = output_file
+
+        if not os.path.exists(result):
+            raise gr.Error(
+                "Video generation completed but no output video was found."
+            )
+
+        progress(
+            1.0,
+            desc="Done!"
+        )
 
         return result
-
 
     except Exception as e:
 
         raise gr.Error(
-            f"Video generation failed: {str(e)}"
+            f"Video generation failed:\n\n{str(e)}"
         )
-
 
     finally:
 
-        # Remove temporary upload folder
         shutil.rmtree(
             temp_dir,
             ignore_errors=True
@@ -121,17 +148,15 @@ with gr.Blocks(
     title="AI Cinematic Video Creator"
 ) as demo:
 
-
     gr.Markdown(
         """
-        # 🎬 AI Cinematic Video Creator
+# 🎬 AI Cinematic Video Creator
 
-        Upload your photos and optional background music.
+Upload your photos and optional background music.
 
-        The AI Cinematic Engine will generate a vertical cinematic video.
-        """
+The AI Cinematic Engine will automatically create a cinematic vertical video with professional camera motion.
+"""
     )
-
 
     images = gr.File(
         label="Upload Images",
@@ -140,24 +165,20 @@ with gr.Blocks(
         type="filepath"
     )
 
-
     music = gr.File(
         label="Upload Background Music (Optional)",
         file_types=["audio"],
         type="filepath"
     )
 
-
     render_button = gr.Button(
         "🎥 Generate Video",
         variant="primary"
     )
 
-
     output_video = gr.Video(
         label="Generated Video"
     )
-
 
     render_button.click(
         fn=generate_video,
@@ -175,19 +196,11 @@ with gr.Blocks(
 
 if __name__ == "__main__":
 
-
-    # Local Windows:
-    # http://127.0.0.1:7860
-    #
-    # Hugging Face:
-    # automatically uses 0.0.0.0
-
     host = (
         "0.0.0.0"
         if os.getenv("SPACE_ID")
         else "127.0.0.1"
     )
-
 
     demo.launch(
         server_name=host,

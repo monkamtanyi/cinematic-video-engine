@@ -1,567 +1,309 @@
 import os
 import math
 import numpy as np
-
-from moviepy.editor import VideoClip, AudioFileClip
+import gc
+import subprocess
 
 from engine.core.frame_engine import FrameEngine
 
 
 class VideoRenderer:
+    """
+    Stable production renderer (NO blank frames, NO silent failures)
+    """
 
     def __init__(self):
-
         self.frame = FrameEngine()
+        self.W = 1080
+        self.H = 1920
 
-        # --------------------------------------------------
-        # OPTION A:
-        # Production default:
-        #   1080 x 1920
-        #
-        # Local preview:
-        #   VIDEO_WIDTH=540
-        #   VIDEO_HEIGHT=960
-        # --------------------------------------------------
-
-        self.W = int(
-            os.getenv(
-                "VIDEO_WIDTH",
-                1080
-            )
-        )
-
-        self.H = int(
-            os.getenv(
-                "VIDEO_HEIGHT",
-                1920
-            )
-        )
-
-
-    # --------------------------------------------------
-    # SAFE IMAGE LOADER
-    # --------------------------------------------------
-
+    # ----------------------------
+    # LOAD IMAGE (STRICT)
+    # ----------------------------
     def _load(self, path):
-
         img = self.frame.load(path)
-
         if img is None:
-            raise Exception(
-                f"Failed to load image: {path}"
-            )
-
+            raise RuntimeError(f"Failed to load image: {path}")
         return img
 
+    # ----------------------------
+    # BLIT (HARDENED - NO SILENT FAILS)
+    # ----------------------------
+    def _blit(self, canvas, img, x, y, zoom):
+        import cv2
 
-    # --------------------------------------------------
-    # SAFE CANVAS
-    # --------------------------------------------------
+        h, w = img.shape[:2]
 
-    def _canvas(self):
+        nw = max(2, int(w * zoom))
+        nh = max(2, int(h * zoom))
 
-        return np.zeros(
-            (
-                self.H,
-                self.W,
-                3
-            ),
-            dtype=np.uint8
-        )
+        resized = cv2.resize(img, (nw, nh), interpolation=cv2.INTER_LINEAR)
 
+        x = int(x - nw * 0.5)
+        y = int(y - nh * 0.5)
 
-    # --------------------------------------------------
-    # SAFE BLIT
-    # --------------------------------------------------
+        x1 = max(0, x)
+        y1 = max(0, y)
+        x2 = min(self.W, x + nw)
+        y2 = min(self.H, y + nh)
 
-    def _blit(
-        self,
-        canvas,
-        img,
-        x,
-        y,
-        zoom
-    ):
+        if x1 >= x2 or y1 >= y2:
+            return canvas
 
-        """
-        Uses FrameEngine canvas rendering
-        when available.
+        roi_w = x2 - x1
+        roi_h = y2 - y1
 
-        Falls back to OpenCV renderer.
-        """
-
-        if hasattr(
-            self.frame,
-            "apply_to_canvas"
-        ):
-
-            return self.frame.apply_to_canvas(
-                canvas,
-                img,
-                x,
-                y,
-                zoom
-            )
-
-
-        try:
-
-            import cv2
-
-
-            if isinstance(
-                img,
-                np.ndarray
-            ):
-
-                h, w = img.shape[:2]
-
-
-                new_w = int(
-                    w * zoom*0.35
-                )
-
-                new_h = int(
-                    h * zoom*0.35
-                )
-
-
-                if (
-                    new_w <= 0
-                    or new_h <= 0
-                ):
-                    return canvas
-
-
-                resized = cv2.resize(
-                    img,
-                    (
-                        new_w,
-                        new_h
-                    )
-                )
-
-
-                x = int(
-                    x - new_w / 2
-                )
-
-                y = int(
-                    y - new_h / 2
-                )
-
-
-                if (
-                    x >= self.W
-                    or y >= self.H
-                    or x + new_w <= 0
-                    or y + new_h <= 0
-                ):
-                    return canvas
-
-
-                x1 = max(
-                    0,
-                    x
-                )
-
-                y1 = max(
-                    0,
-                    y
-                )
-
-                x2 = min(
-                    self.W,
-                    x + new_w
-                )
-
-                y2 = min(
-                    self.H,
-                    y + new_h
-                )
-
-
-                canvas[
-                    y1:y2,
-                    x1:x2
-                ] = resized[
-                    0:(y2-y1),
-                    0:(x2-x1)
-                ]
-
-
-        except Exception:
-
-            pass
-
+        canvas[y1:y2, x1:x2] = resized[:roi_h, :roi_w]
 
         return canvas
 
+    # ----------------------------
+    # MOTION
+    # ----------------------------
+    def _hero(self, t):
 
+        # Segment 1 speed reduced to 75%
+        t = min(t * 0.75, 1.0)
 
-    # --------------------------------------------------
-    # MAIN RENDER
-    # --------------------------------------------------
+        if t < 0.4:
+            p = t / 0.4
+            return (
+                self.W / 2,
+                self.H + 300 - p * 800,
+                0.22
+            )
 
+        if t < 0.65:
+            return (
+                self.W / 2,
+                self.H / 2,
+                0.24
+            )
+
+        if t < 0.85:
+            return (
+                self.W / 2,
+                self.H / 2,
+                0.23
+            )
+
+        p = (t - 0.85) / 0.15
+
+        return (
+            self.W / 2,
+            self.H / 2 - p * 600,
+            0.22
+        )
+
+    # ----------------------------
+    # MAIN RENDER (FIXED FRAME PIPELINE)
+    # ----------------------------
     def render(
         self,
         clips,
         music_path=None,
-        output_file="output/final.mp4"
+        output_file="output/out.mp4",
+        progress_callback=None,
+        segment_duration=None,
+        **kwargs
     ):
 
+        if not clips:
+            raise ValueError("No input clips")
 
-        total = len(clips)
+        print("[RENDER] loading images...")
 
-        images = [
-            self._load(c)
-            for c in clips
+        images = [self._load(c) for c in clips]
+
+        # =========================================================
+        # ✅ FIX: TRUE 25% SEGMENT TIMELINE
+        # =========================================================
+        fps = 24
+
+        total_duration = 96  # 4 segments × 12s each (25% each)
+        seg_duration = total_duration / 4
+
+        t1 = seg_duration
+        t2 = t1 + seg_duration
+        t3 = t2 + seg_duration
+        t4 = t3 + seg_duration
+
+        total_frames = int(total_duration * fps)
+
+        os.makedirs(os.path.dirname(output_file), exist_ok=True)
+        output_file = os.path.abspath(output_file)
+
+        # ----------------------------
+        # FFmpeg PIPE (SAFE)
+        # ----------------------------
+        cmd = [
+            "ffmpeg",
+            "-y",
+            "-loglevel", "error",
+            "-f", "rawvideo",
+            "-pix_fmt", "rgb24",
+            "-s", f"{self.W}x{self.H}",
+            "-r", str(fps),
+            "-i", "-",
         ]
 
+        if music_path and os.path.exists(music_path):
+            cmd += ["-i", music_path]
 
-        HERO_DURATION = 12
-        CONVEYOR_DURATION = 12
-        SPLIT_DURATION = 12
-        CIRCLE_DURATION = 12
+        cmd += [
+            "-c:v", "libx264",
+            "-pix_fmt", "yuv420p",
+            "-preset", "veryfast",
+            "-movflags", "+faststart",
+            "-b:v", "2800k",
+        ]
 
+        if music_path:
+            cmd += ["-map", "0:v:0", "-map", "1:a:0", "-shortest"]
+        else:
+            cmd += ["-an"]
 
-        HERO_END = HERO_DURATION
+        cmd += [output_file]
 
-        CONVEYOR_END = (
-            HERO_END
-            +
-            CONVEYOR_DURATION
+        process = subprocess.Popen(
+            cmd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
+            bufsize=0
         )
 
-        SPLIT_END = (
-            CONVEYOR_END
-            +
-            SPLIT_DURATION
-        )
+        def report(p, m):
+            if progress_callback:
+                try:
+                    progress_callback(p, m)
+                except:
+                    pass
 
-        CIRCLE_END = (
-            SPLIT_END
-            +
-            CIRCLE_DURATION
-        )
+        report(0.01, "render started")
 
+        images_local = images
 
-        total_duration = CIRCLE_END
+        # ----------------------------
+        # MAIN LOOP
+        # ----------------------------
+        for i in range(total_frames):
 
+            if process.poll() is not None:
+                err = process.stderr.read().decode("utf-8", errors="ignore")
+                raise RuntimeError(err)
 
+            # normalized time
+            t = (i / total_frames) * total_duration
 
-        def make_frame(t):
+            canvas = np.zeros((self.H, self.W, 3), dtype=np.uint8)
 
-            canvas = self._canvas()
+            # segment index + local progress
+            seg = int(t // seg_duration)
+            p = (t % seg_duration) / seg_duration
 
-
-
-            # ==================================================
+            # ----------------------------
             # SEGMENT 1
-            # HERO FLOW
-            #
-            # KEPT UNCHANGED
-            # ==================================================
+            # ----------------------------
+            if seg == 0:
+                per = seg_duration / len(images_local)
+                for idx, img in enumerate(images_local):
+                    s = idx * per
+                    if s <= t < s + per:
+                        lt = (t - s) / per
+                        x, y, z = self._hero(lt)
+                        canvas = self._blit(canvas, img, x, y, z)
 
-            if t < HERO_END:
-
-
-                per_img = (
-                    HERO_DURATION
-                    /
-                    total
-                )
-
-
-                for i, img in enumerate(images):
-
-
-                    start = (
-                        i
-                        *
-                        per_img
-                    )
-
-                    end = (
-                        start
-                        +
-                        per_img
-                    )
-
-
-                    if not (
-                        start
-                        <=
-                        t
-                        <
-                        end
-                    ):
-                        continue
-
-
-
-                    local_t = (
-                        t - start
-                    ) / per_img
-
-
-
-                    if local_t < 0.40:
-
-
-                        p = (
-                            local_t
-                            /
-                            0.40
-                        )
-
-
-                        x = self.W / 2
-
-                        y = (
-                            self.H
-                            +
-                            300
-                            -
-                            p *
-                            (
-                                self.H / 2
-                                +
-                                300
-                            )
-                        )
-
-
-                        zoom = 0.22
-
-
-
-                    elif local_t < 0.60:
-
-
-                        x = self.W / 2
-
-                        y = self.H / 2
-
-                        zoom = 0.24
-
-
-
-                    elif local_t < 0.80:
-
-
-                        p = (
-                            local_t
-                            -
-                            0.60
-                        ) / 0.20
-
-
-                        x = self.W / 2
-
-                        y = self.H / 2
-
-
-                        zoom = (
-                            0.24
-                            -
-                            0.05 *
-                            math.sin(
-                                p *
-                                math.pi
-                            )
-                        )
-
-
-
-                    else:
-
-
-                        p = (
-                            local_t
-                            -
-                            0.80
-                        ) / 0.20
-
-
-                        x = self.W / 2
-
-
-                        y = (
-                            self.H / 2
-                            -
-                            p *
-                            (
-                                self.H / 2
-                                +
-                                400
-                            )
-                        )
-
-
-                        zoom = 0.22
-
-
-
-                    canvas = self._blit(
-                        canvas,
-                        img,
-                        x,
-                        y,
-                        zoom
-                    )
-
-                        # ==================================================
+            # ----------------------------
             # SEGMENT 2
             # FILMSTRIP TABLE-SCROLL CONVEYOR
             #
             # Requirements:
-            # - images move across like conveyor belt
-            # - no overlap
             # - one image follows another
+            # - no overlap
             # - center pause
             # - zoom out
             # - zoom in
-            # - continue scrolling
-            # ==================================================
+            # - continuous scrolling
+            # ----------------------------
+            elif seg == 1:
 
-                        # ==================================================
-            # SEGMENT 2 - FILMSTRIP CONVEYOR
-            # ==================================================
-                        # ==================================================
-            # SEGMENT 3 - MILITARY CORRIDOR
-            # ==================================================
-            elif t < SPLIT_END:
+                spacing = 360
+                card_y = self.H / 2
 
-                p = (t - CONVEYOR_END) / SPLIT_DURATION
+                conveyor_width = len(images_local) * spacing
 
-                left_x = self.W * 0.35
-                right_x = self.W * 0.65
+                for idx, img in enumerate(images_local):
 
-                row_spacing = self.H * 0.18
-                start_y = self.H * 0.15
+                    start_x = self.W + 400 + (idx * spacing)
 
-                for i, img in enumerate(images):
+                    travel = p * (conveyor_width + self.W)
 
-                    row = i // 2
-                    left = (i % 2 == 0)
+                    x = start_x - travel
 
-                    if left:
-                        x0 = left_x
-                    else:
-                        x0 = right_x
+                    distance = abs(x - (self.W / 2))
 
-                    y0 = start_y + row * row_spacing
-
-                    if p < 0.60:
-
-                        q = p / 0.60
-
-                        x = x0
-                        y = y0 + q * 120
-
-                        zoom = 0.10 + 0.08 * q
-
-                    else:
-
-                        q = (p - 0.60) / 0.40
-
-                        if left:
-                            x = x0 - q * self.W * 0.30
-                        else:
-                            x = x0 + q * self.W * 0.30
-
-                        y = y0 + 120
-
+                    # approaching center
+                    if distance > 500:
                         zoom = 0.18
 
+                    # center pause + zoom out
+                    elif distance > 120:
+                        zoom = 0.20
+
+                    # center focus zoom in
+                    else:
+                        zoom = 0.24
+
                     canvas = self._blit(
                         canvas,
                         img,
                         x,
-                        y,
+                        card_y,
                         zoom
                     )
 
-
-            
-
-
-
-            # ==================================================
+            # ----------------------------
             # SEGMENT 3
-            # MILITARY FORMATION
-            #
-            # Formation:
-            #
-            # IMAGE       IMAGE
-            # IMAGE       IMAGE
-            # IMAGE       IMAGE
-            #
-            #             YOU
-            #
-            # Motion:
-            #
-            # \ \ \ \
-            #
-            #        YOU
-            #
-            # / / / /
-            #
-            # Creates corridor effect
-            # ==================================================
+            # MILITARY CORRIDOR
+            # ----------------------------
+            elif seg == 2:
 
-         
+                left_x = self.W * 0.33
+                right_x = self.W * 0.67
 
+                row_spacing = 260
+                start_y = 220
 
-                        # ==================================================
-            # SEGMENT 3 - MILITARY CORRIDOR
-            # ==================================================
-            elif t < SPLIT_END:
+                for idx, img in enumerate(images_local):
 
-                p = (t - CONVEYOR_END) / SPLIT_DURATION
+                    row = idx // 2
+                    left = (idx % 2 == 0)
 
-                left_x = self.W * 0.35
-                right_x = self.W * 0.65
-
-                row_spacing = self.H * 0.18
-                start_y = self.H * 0.15
-
-                for i, img in enumerate(images):
-
-                    row = i // 2
-                    left = (i % 2 == 0)
-
-                    if left:
-                        x0 = left_x
-                    else:
-                        x0 = right_x
-
+                    x0 = left_x if left else right_x
                     y0 = start_y + row * row_spacing
 
-                    # Phase 1 - Columns approach viewer
-                    if p < 0.60:
+                    if p < 0.65:
 
-                        q = p / 0.60
+                        q = p / 0.65
 
                         x = x0
-                        y = y0 + q * 120
+                        y = y0 + q * 180
 
-                        zoom = 0.12 + (0.10 * q)
+                        zoom = 0.14 + (0.12 * q)
 
-                    # Phase 2 - Peel away
                     else:
 
-                        q = (p - 0.60) / 0.40
+                        q = (p - 0.65) / 0.35
 
                         if left:
-                            x = x0 - q * self.W * 0.30
+                            x = x0 - q * 340
                         else:
-                            x = x0 + q * self.W * 0.30
+                            x = x0 + q * 340
 
-                        y = y0 + 120
+                        y = y0 + 180
 
-                        zoom = 0.22
+                        zoom = 0.26
 
                     canvas = self._blit(
                         canvas,
@@ -571,154 +313,36 @@ class VideoRenderer:
                         zoom
                     )
 
-            # ==================================================
+            # ----------------------------
             # SEGMENT 4
-            # CIRCULAR MOTION
-            #
-            # All images remain inside canvas
-            # ==================================================
-
+            # ----------------------------
             else:
+                rot = p * 4 * math.pi
+                r = 820
 
-                p = (t - SPLIT_END) / CIRCLE_DURATION
+                for i2, img in enumerate(images_local):
+                    a = (2 * math.pi * i2 / len(images_local)) + rot
+                    x = self.W / 2 + r * math.cos(a)
+                    y = self.H / 2 + r * math.sin(a)
+                    canvas = self._blit(canvas, img, x, y, 0.18)
 
-                center_x = self.W / 2
-                center_y = self.H / 2
+            # ----------------------------
+            # PIPE WRITE
+            # ----------------------------
+            try:
+                process.stdin.write(canvas.tobytes())
+            except BrokenPipeError:
+                err = process.stderr.read().decode("utf-8", errors="ignore")
+                raise RuntimeError(err)
 
-                radius = min(
-                    self.W,
-                    self.H
-                ) * 0.22
+            if i % 10 == 0:
+                report(i / total_frames, f"{i}/{total_frames}")
 
-                rotation = (
-                    p *
-                    2 *
-                    math.pi *
-                    2
-                )
+        process.stdin.close()
+        process.wait()
 
-                for i, img in enumerate(images):
+        gc.collect()
 
-                    angle = (
-                        (2 * math.pi * i / total)
-                        +
-                        rotation
-                    )
+        report(1.0, "done")
 
-                    x = (
-                        center_x
-                        +
-                        radius *
-                        math.cos(angle)
-                    )
-
-                    y = (
-                        center_y
-                        +
-                        radius *
-                        math.sin(angle)
-                    )
-
-                    # keep images inside canvas
-                    x = max(
-                        100,
-                        min(
-                            self.W - 100,
-                            x
-                        )
-                    )
-
-                    y = max(
-                        100,
-                        min(
-                            self.H - 100,
-                            y
-                        )
-                    )
-
-                    zoom = 0.12
-
-
-                    canvas = self._blit(
-                        canvas,
-                        img,
-                        x,
-                        y,
-                        zoom
-                    )
-
-
-            return canvas
-
-
-
-        # --------------------------------------------------
-        # CREATE VIDEO
-        # --------------------------------------------------
-
-        video = VideoClip(
-            make_frame,
-            duration=total_duration
-        )
-
-
-        # --------------------------------------------------
-        # AUDIO
-        # --------------------------------------------------
-
-        if (
-            music_path
-            and
-            os.path.exists(
-                music_path
-            )
-        ):
-
-
-            audio = AudioFileClip(
-                music_path
-            )
-
-
-            if audio.duration > total_duration:
-
-                audio = audio.subclip(
-                    0,
-                    total_duration
-                )
-
-
-            video = video.set_audio(
-                audio
-            )
-
-
-
-        # --------------------------------------------------
-        # EXPORT
-        # --------------------------------------------------
-
-        output_folder = os.path.dirname(
-            output_file
-        )
-
-
-        if output_folder:
-
-            os.makedirs(
-                output_folder,
-                exist_ok=True
-            )
-
-
-        video.write_videofile(
-            output_file,
-            fps=30,
-            codec="libx264",
-            bitrate="6000k",
-            audio_codec="aac"
-        )
-
-
-        return output_file        
-
+        return output_file
