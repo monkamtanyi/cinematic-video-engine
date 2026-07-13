@@ -5,7 +5,7 @@ AI Cinematic Video Creator Engine V5
 ├── requirements.txt
 ├── README.md
 │
-├── .github
+├── .github 
 │   └── workflows
 │       ├── render-test.yml
 │       └── render.yml
