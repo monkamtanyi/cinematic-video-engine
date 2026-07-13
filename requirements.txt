@@ -6,3 +6,4 @@ imageio-ffmpeg
 tqdm
 opencv-python-headless==4.8.1.78
 ffmpeg-python
+huggingface_hub==0.28.1
