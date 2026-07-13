@@ -7,3 +7,5 @@ imageio-ffmpeg
 tqdm
 opencv-python-headless==4.8.1.78
 ffmpeg-python
+gradio==5.23.3
+gradio_client==1.8.0
