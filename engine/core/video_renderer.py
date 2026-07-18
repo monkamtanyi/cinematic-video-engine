@@ -14,8 +14,8 @@ class VideoRenderer:
 
     def __init__(self):
         self.frame = FrameEngine()
-        self.W = 540
-        self.H = 960
+        self.W = 360
+        self.H = 640
 
     # ----------------------------
     # LOAD IMAGE (STRICT)
@@ -64,35 +64,35 @@ class VideoRenderer:
     def _hero(self, t):
 
         # Segment 1 speed reduced to 75%
-        t = min(t * 0.75, 1.0)
+        t = min(t * 0.70, 1.0)
 
         if t < 0.4:
             p = t / 0.4
             return (
                 self.W / 2,
-                self.H + 200 - p * 700,
+                self.H + 80 - p * 350,
                 0.22
             )
 
-        if t < 0.65:
+        if t < 0.50:
             return (
                 self.W / 2,
                 self.H / 2,
                 0.24
             )
 
-        if t < 0.85:
+        if t < 0.75:
             return (
                 self.W / 2,
                 self.H / 2,
                 0.23
             )
 
-        p = (t - 0.85) / 0.15
+        p = (t - 0.75) / 0.25
 
         return (
             self.W / 2,
-            self.H / 2 - p * 600,
+            self.H / 2 - p * 250,
             0.22
         )
 
@@ -148,15 +148,21 @@ class VideoRenderer:
             "-i", "-",
         ]
 
+        if music_path:
+            music_path = os.path.abspath(music_path)
+
         if music_path and os.path.exists(music_path):
+            print(f"ADDING AUDIO TRACK: {music_path}")
             cmd += ["-i", music_path]
+        else:
+            print("NO AUDIO FILE FOUND")
 
         cmd += [
             "-c:v", "libx264",
             "-pix_fmt", "yuv420p",
             "-preset", "veryfast",
             "-movflags", "+faststart",
-            "-b:v", "2800k",
+            "-b:v", "2500k",
         ]
 
         if music_path and os.path.exists(music_path):
@@ -168,13 +174,22 @@ class VideoRenderer:
                 "-c:a",
                 "aac",
                 "-b:a",
-                "128k",
+                "192k",
+                "-ar",
+                "44100",
+                "-ac",
+                "2",
+                "-af",
+                "volume=1.0",
                 "-shortest"
             ]
         else:
             cmd += ["-an"]
 
         cmd += [output_file]
+
+        print("FFMPEG COMMAND:")
+        print(" ".join(cmd))
 
         process = subprocess.Popen(
             cmd,
@@ -211,7 +226,7 @@ class VideoRenderer:
 
             # segment index + local progress
             seg = int(t // seg_duration)
-            p = (t % seg_duration) / seg_duration
+            p = ((t % seg_duration) / seg_duration) * 0.65
 
             # ----------------------------
             # SEGMENT 1
@@ -239,7 +254,7 @@ class VideoRenderer:
             # ----------------------------
             elif seg == 1:
 
-                spacing = 360
+                spacing = 220
                 card_y = self.H / 2
 
                 conveyor_width = len(images_local) * spacing
@@ -248,7 +263,7 @@ class VideoRenderer:
 
                     start_x = self.W + 400 + (idx * spacing)
 
-                    travel = p * (conveyor_width + self.W)
+                    travel = (p * 0.20) * (conveyor_width + self.W)
 
                     x = start_x - travel
 
@@ -283,7 +298,7 @@ class VideoRenderer:
                 left_x = self.W * 0.33
                 right_x = self.W * 0.67
 
-                row_spacing = 260
+                row_spacing = 110
                 start_y = 220
 
                 for idx, img in enumerate(images_local):
@@ -296,7 +311,7 @@ class VideoRenderer:
 
                     if p < 0.65:
 
-                        q = p / 0.65
+                        q = p / 0.50
 
                         x = x0
                         y = y0 + q * 180
@@ -305,7 +320,7 @@ class VideoRenderer:
 
                     else:
 
-                        q = (p - 0.65) / 0.35
+                        q = (p - 0.50) / 0.50
 
                         if left:
                             x = x0 - q * 340
@@ -335,7 +350,7 @@ class VideoRenderer:
 
                     q = p / 0.33
                     rotation = q * 4.0 * math.pi
-                    radius = 180
+                    radius = 60
 
                     for idx, img in enumerate(images_local):
 
@@ -356,7 +371,7 @@ class VideoRenderer:
 
                     q = (p - 0.33) / 0.33
 
-                    outer_radius = 180 - (60 * q)
+                    outer_radius = 60 - (60 * q)
                     inner_radius = outer_radius * 0.45
 
                     for idx, img in enumerate(images_local):
@@ -382,7 +397,7 @@ class VideoRenderer:
                 else:
 
                     q = (p - 0.66) / 0.34
-                    radius = 120 * (1.0 - q)
+                    radius = 40 * (1.0 - (q * 0.5))
 
                     for idx, img in enumerate(images_local):
 
@@ -404,8 +419,20 @@ class VideoRenderer:
             # ----------------------------
             try:
                 process.stdin.write(canvas.tobytes())
+
             except BrokenPipeError:
-                err = process.stderr.read().decode("utf-8", errors="ignore")
+
+                process.stdin.close()
+
+                err = process.stderr.read().decode(
+                    "utf-8",
+                    errors="ignore"
+                )
+
+                print("\n========== FFMPEG ERROR ==========")
+                print(err)
+                print("==================================")
+
                 raise RuntimeError(err)
 
             if i % 10 == 0:

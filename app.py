@@ -65,12 +65,12 @@ def generate_video(images, music, progress=None):
             image = Image.open(img)
 
             image.thumbnail(
-                (1280,1280)
+                (1600,1600)
             )
 
             image.save(
                 destination,
-                quality=85
+                quality=95
             )
 
             image_paths.append(destination)
