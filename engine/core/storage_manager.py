@@ -1,5 +1,6 @@
 import os
 import shutil
+from pathlib import Path
 
 
 class StorageManager:
@@ -17,12 +18,8 @@ class StorageManager:
 
     def _detect_base_path(self):
 
-        # Prefer external drive
-        if os.path.exists("D:\\"):
-            return "D:\\CinematicEngine"
-
-        # fallback to C:
-        return "C:\\CinematicEngine"
+        # Use project directory for local and cloud deployments
+        return str(Path(__file__).resolve().parents[2])
 
     def _create_dirs(self):
 
