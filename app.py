@@ -2,11 +2,13 @@
 import os
 import shutil
 import tempfile
+import time
 
 import gradio as gr
 from PIL import Image
 
 from engine.core.video_renderer import VideoRenderer
+from engine.core.audio_utils import normalize_audio
 
 
 # --------------------------------------------------
@@ -104,11 +106,12 @@ def generate_video(images, music, progress=None):
 
         output_file = os.path.join(
             OUTPUT_DIR,
-            "final.mp4"
+            f"final_{int(time.time())}.mp4"
         )
 
-        if os.path.exists(output_file):
-            os.remove(output_file)
+        # Keep previous generated videos available
+        # Do not delete existing output on refresh
+        os.makedirs(OUTPUT_DIR, exist_ok=True)
 
         # ------------------------------------------
         # RENDER
@@ -118,6 +121,8 @@ def generate_video(images, music, progress=None):
             0.35,
             desc="Rendering cinematic video..."
         )
+
+        music_path = normalize_audio(music)
 
         result = renderer.render(
             clips=image_paths,
