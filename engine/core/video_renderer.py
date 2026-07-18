@@ -15,7 +15,7 @@ class VideoRenderer:
     def __init__(self):
         self.frame = FrameEngine()
         self.W = 540
-        self.H = 720
+        self.H = 960
 
     # ----------------------------
     # LOAD IMAGE (STRICT)
@@ -70,7 +70,7 @@ class VideoRenderer:
             p = t / 0.4
             return (
                 self.W / 2,
-                self.H + 300 - p * 800,
+                self.H + 200 - p * 700,
                 0.22
             )
 
@@ -159,8 +159,18 @@ class VideoRenderer:
             "-b:v", "2800k",
         ]
 
-        if music_path:
-            cmd += ["-map", "0:v:0", "-map", "1:a:0", "-shortest"]
+        if music_path and os.path.exists(music_path):
+            cmd += [
+                "-map",
+                "0:v:0",
+                "-map",
+                "1:a:0",
+                "-c:a",
+                "aac",
+                "-b:a",
+                "128k",
+                "-shortest"
+            ]
         else:
             cmd += ["-an"]
 

@@ -10,7 +10,7 @@ def main():
 
     print("🎬 Cinematic Engine V5 Starting...")
 
-    image_folder = r"D:\CinematicEngine\photos"
+    image_folder = "photos"
 
     clips = [
         os.path.join(image_folder, f)
@@ -25,7 +25,7 @@ def main():
             f"No images found in {image_folder}"
         )
 
-    music = r"D:\CinematicEngine\music\soundtrack.mp3"
+    music = "music/background_music.mp3"
 
     renderer = VideoRenderer()
 

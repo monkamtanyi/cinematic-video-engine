@@ -4,6 +4,7 @@ import shutil
 import tempfile
 
 import gradio as gr
+from PIL import Image
 
 from engine.core.video_renderer import VideoRenderer
 
@@ -21,7 +22,10 @@ OUTPUT_DIR = "output"
 # VIDEO GENERATION FUNCTION
 # --------------------------------------------------
 
-def generate_video(images, music, progress=gr.Progress()):
+def generate_video(images, music, progress=None):
+
+    if progress is None:
+        progress = lambda *args, **kwargs: None
 
     progress(0.0, desc="Starting AI Cinematic Engine...")
 
@@ -58,9 +62,15 @@ def generate_video(images, music, progress=gr.Progress()):
                 filename
             )
 
-            shutil.copy(
-                img,
-                destination
+            image = Image.open(img)
+
+            image.thumbnail(
+                (1280,1280)
+            )
+
+            image.save(
+                destination,
+                quality=85
             )
 
             image_paths.append(destination)
@@ -78,6 +88,15 @@ def generate_video(images, music, progress=gr.Progress()):
 
         if music:
             music_path = music
+        else:
+            default_music = os.path.join(
+                os.getcwd(),
+                "music",
+                "background_music.mp3"
+            )
+
+            if os.path.exists(default_music):
+                music_path = default_music
 
         # ------------------------------------------
         # OUTPUT
