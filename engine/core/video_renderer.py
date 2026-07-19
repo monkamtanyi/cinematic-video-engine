@@ -185,7 +185,9 @@ class VideoRenderer:
                 "-ac",
                 "2",
                 "-af",
-                "volume=1.0"
+                "volume=1.0",
+                "-t",
+                str(total_duration)
             ]
         else:
             cmd += ["-an"]
@@ -443,7 +445,18 @@ class VideoRenderer:
                 report(i / total_frames, f"{i}/{total_frames}")
 
         process.stdin.close()
+
+        stderr = process.stderr.read().decode(
+            "utf-8",
+            errors="ignore"
+        )
+
         process.wait()
+
+        if process.returncode != 0:
+            raise RuntimeError(
+                f"FFmpeg failed:\n{stderr}"
+            )
 
         gc.collect()
 
