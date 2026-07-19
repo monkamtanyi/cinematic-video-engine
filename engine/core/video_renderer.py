@@ -153,7 +153,12 @@ class VideoRenderer:
 
         if music_path and os.path.exists(music_path):
             print(f"ADDING AUDIO TRACK: {music_path}")
-            cmd += ["-i", music_path]
+            cmd += [
+                "-stream_loop",
+                "-1",
+                "-i",
+                music_path
+            ]
         else:
             print("NO AUDIO FILE FOUND")
 
@@ -180,8 +185,7 @@ class VideoRenderer:
                 "-ac",
                 "2",
                 "-af",
-                "volume=1.0",
-                "-shortest"
+                "volume=1.0"
             ]
         else:
             cmd += ["-an"]
@@ -446,10 +450,3 @@ class VideoRenderer:
         report(1.0, "done")
 
         return output_file
-
-
-
-
-
-
-
