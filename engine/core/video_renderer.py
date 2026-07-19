@@ -260,7 +260,7 @@ class VideoRenderer:
             # ----------------------------
             elif seg == 1:
 
-                spacing = 220
+                spacing = 180
                 card_y = self.H / 2
 
                 conveyor_width = len(images_local) * spacing
@@ -269,7 +269,7 @@ class VideoRenderer:
 
                     start_x = self.W + 400 + (idx * spacing)
 
-                    travel = (p * 0.20) * (conveyor_width + self.W)
+                    travel = p * (conveyor_width + self.W + 800)
 
                     x = start_x - travel
 
